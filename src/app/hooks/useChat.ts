@@ -9,7 +9,7 @@ import {
 } from "@langchain/langgraph-sdk";
 import { v4 as uuidv4 } from "uuid";
 import type { UseStreamThread } from "@langchain/langgraph-sdk/react";
-import type { TodoItem } from "@/app/types/types";
+import type { TodoItem, PanelPcConfiguration } from "@/app/types/types";
 import { useClient } from "@/providers/ClientProvider";
 import { useQueryState } from "nuqs";
 
@@ -17,6 +17,7 @@ export type StateType = {
   messages: Message[];
   todos: TodoItem[];
   files: Record<string, string>;
+  configuration?: PanelPcConfiguration;
   email?: {
     id?: string;
     subject?: string;
@@ -149,6 +150,7 @@ export function useChat({
     stream,
     todos: stream.values.todos ?? [],
     files: stream.values.files ?? {},
+    configuration: stream.values.configuration,
     email: stream.values.email,
     ui: stream.values.ui,
     setFiles,

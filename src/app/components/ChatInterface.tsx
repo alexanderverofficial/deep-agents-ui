@@ -30,6 +30,7 @@ import { useChatContext } from "@/providers/ChatProvider";
 import { cn } from "@/lib/utils";
 import { useStickToBottom } from "use-stick-to-bottom";
 import { FilesPopover } from "@/app/components/TasksFilesSidebar";
+import { ConfigSidebar } from "@/app/components/ConfigSidebar";
 
 interface ChatInterfaceProps {
   assistant: Assistant | null;
@@ -62,7 +63,7 @@ const getStatusIcon = (status: TodoItem["status"], className?: string) => {
 };
 
 export const ChatInterface = React.memo<ChatInterfaceProps>(({ assistant }) => {
-  const [metaOpen, setMetaOpen] = useState<"tasks" | "files" | null>(null);
+  const [metaOpen, setMetaOpen] = useState<"tasks" | "files" | "config" | null>(null);
   const tasksContainerRef = useRef<HTMLDivElement | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
 
@@ -74,6 +75,7 @@ export const ChatInterface = React.memo<ChatInterfaceProps>(({ assistant }) => {
     messages,
     todos,
     files,
+    configuration,
     ui,
     setFiles,
     isLoading,
@@ -223,6 +225,7 @@ export const ChatInterface = React.memo<ChatInterfaceProps>(({ assistant }) => {
 
   const hasTasks = todos.length > 0;
   const hasFiles = Object.keys(files).length > 0;
+  const hasConfig = !!configuration?.base_unit_sku;
 
   // Parse out any action requests or review configs from the interrupt
   const actionRequestsMap: Map<string, ActionRequest> | null = useMemo(() => {
@@ -293,7 +296,7 @@ export const ChatInterface = React.memo<ChatInterfaceProps>(({ assistant }) => {
             "mx-auto w-[calc(100%-32px)] max-w-[1024px] transition-colors duration-200 ease-in-out"
           )}
         >
-          {(hasTasks || hasFiles) && (
+          {(hasTasks || hasFiles || hasConfig) && (
             <div className="flex max-h-72 flex-col overflow-y-auto border-b border-border bg-sidebar empty:hidden">
               {!metaOpen && (
                 <>
@@ -400,10 +403,29 @@ export const ChatInterface = React.memo<ChatInterfaceProps>(({ assistant }) => {
                       );
                     })();
 
+                    const configTrigger = (() => {
+                      if (!hasConfig) return null;
+                      return (
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setMetaOpen((prev) =>
+                              prev === "config" ? null : "config"
+                            )
+                          }
+                          className="flex flex-shrink-0 cursor-pointer items-center gap-2 px-[18px] py-3 text-left text-sm"
+                          aria-expanded={metaOpen === "config"}
+                        >
+                          Konfiguracja
+                        </button>
+                      );
+                    })();
+
                     return (
-                      <div className="grid grid-cols-[1fr_auto_auto] items-center">
+                      <div className="grid grid-cols-[1fr_auto_auto_auto] items-center">
                         {tasksTrigger}
                         {filesTrigger}
+                        {configTrigger}
                       </div>
                     );
                   })()}
@@ -442,6 +464,20 @@ export const ChatInterface = React.memo<ChatInterfaceProps>(({ assistant }) => {
                         <span className="h-4 min-w-4 rounded-full bg-[#2F6868] px-0.5 text-center text-[10px] leading-[16px] text-white">
                           {Object.keys(files).length}
                         </span>
+                      </button>
+                    )}
+                    {hasConfig && (
+                      <button
+                        type="button"
+                        className="py-3 pr-4 first:pl-[18px] aria-expanded:font-semibold"
+                        onClick={() =>
+                          setMetaOpen((prev) =>
+                            prev === "config" ? null : "config"
+                          )
+                        }
+                        aria-expanded={metaOpen === "config"}
+                      >
+                        Konfiguracja
                       </button>
                     )}
                     <button
@@ -493,6 +529,12 @@ export const ChatInterface = React.memo<ChatInterfaceProps>(({ assistant }) => {
                             isLoading === true || interrupt !== undefined
                           }
                         />
+                      </div>
+                    )}
+
+                    {metaOpen === "config" && (
+                      <div className="mb-6">
+                        <ConfigSidebar />
                       </div>
                     )}
                   </div>
