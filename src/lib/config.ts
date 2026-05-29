@@ -5,6 +5,22 @@ export interface StandaloneConfig {
 }
 
 const CONFIG_KEY = "deep-agent-config";
+const DEFAULT_ASSISTANT_ID = "panel-pc-deep-agent";
+
+function defaultDeploymentUrl(): string {
+  if (typeof window === "undefined") return "";
+  const protocol = window.location.protocol || "http:";
+  const host = window.location.hostname;
+  if (!host) return "";
+  return `${protocol}//${host}:8123`;
+}
+
+export function getDefaultConfig(): StandaloneConfig {
+  return {
+    deploymentUrl: defaultDeploymentUrl(),
+    assistantId: DEFAULT_ASSISTANT_ID,
+  };
+}
 
 export function getConfig(): StandaloneConfig | null {
   if (typeof window === "undefined") return null;

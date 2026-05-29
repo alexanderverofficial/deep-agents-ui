@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useCallback, Suspense } from "react";
 import { useQueryState } from "nuqs";
-import { getConfig, saveConfig, StandaloneConfig } from "@/lib/config";
+import { getConfig, getDefaultConfig, saveConfig, StandaloneConfig } from "@/lib/config";
 import { ConfigDialog } from "@/app/components/ConfigDialog";
 import { Button } from "@/components/ui/button";
 import { Assistant } from "@langchain/langgraph-sdk";
@@ -217,7 +217,12 @@ function HomePageContent() {
         setAssistantId(savedConfig.assistantId);
       }
     } else {
-      setConfigDialogOpen(true);
+      const defaults = getDefaultConfig();
+      setConfig(defaults);
+      saveConfig(defaults);
+      if (!assistantId) {
+        setAssistantId(defaults.assistantId);
+      }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
