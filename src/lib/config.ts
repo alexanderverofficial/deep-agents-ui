@@ -5,7 +5,9 @@ export interface StandaloneConfig {
   configuratorUrl?: string;
 }
 
-const CONFIG_KEY = "deep-agent-config";
+// v2: bump porzuca stary cache z configuratorUrl=:8100 (kolizja z email-monitor),
+// wymusza świeży seed z getDefaultConfig() (port z NEXT_PUBLIC_CONFIGURATOR_PORT).
+const CONFIG_KEY = "deep-agent-config-v2";
 const DEFAULT_ASSISTANT_ID = "panel-pc-deep-agent";
 
 function defaultDeploymentUrl(): string {
@@ -21,7 +23,10 @@ function defaultConfiguratorUrl(): string {
   const protocol = window.location.protocol || "http:";
   const host = window.location.hostname;
   if (!host) return "";
-  return `${protocol}//${host}:8100`;   // prod :8100; lokalnie nadpisz na :18100 przez ConfigDialog
+  // Port konfigurowalny: prod :8100 (configurator), lokalnie :18100 (override, bo
+  // :8100 zajmuje email-monitor). Ustaw NEXT_PUBLIC_CONFIGURATOR_PORT w .env.local.
+  const port = process.env.NEXT_PUBLIC_CONFIGURATOR_PORT || "8100";
+  return `${protocol}//${host}:${port}`;
 }
 
 export function getDefaultConfig(): StandaloneConfig {
