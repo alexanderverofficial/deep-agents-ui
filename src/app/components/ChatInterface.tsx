@@ -225,7 +225,7 @@ export const ChatInterface = React.memo<ChatInterfaceProps>(({ assistant }) => {
 
   const hasTasks = todos.length > 0;
   const hasFiles = Object.keys(files).length > 0;
-  const hasConfig = !!configuration?.base_unit_sku;
+  const hasConfig = !!configuration?.base_unit;
 
   // Parse out any action requests or review configs from the interrupt
   const actionRequestsMap: Map<string, ActionRequest> | null = useMemo(() => {

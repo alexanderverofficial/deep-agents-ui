@@ -27,17 +27,23 @@ export interface TodoItem {
   updatedAt?: Date;
 }
 
-export interface ConfigComponentEntry {
-  sku: string;
-  quantity?: number;
+export interface ConfigEntrySpecs {
+  screen?: string; cpu?: string; ram?: string; ip?: string; temp?: string;
+  capacity?: string; type?: string; power?: string;
 }
-
+export interface ConfigEntry {
+  sku: string;
+  name: string;
+  image_url: string | null;
+  datasheet_url: string | null;
+  specs: ConfigEntrySpecs;
+}
 export interface PanelPcConfiguration {
-  base_unit_sku: string | null;
-  ram_entries: ConfigComponentEntry[];
-  storage_entries: ConfigComponentEntry[];
-  psu_sku: string | null;
-  os_sku: string | null;
+  base_unit: ConfigEntry | null;
+  ram_entries: ConfigEntry[];
+  storage_entries: ConfigEntry[];
+  psu: ConfigEntry | null;
+  os: ConfigEntry | null;
   requirements: Record<string, unknown>;
 }
 
