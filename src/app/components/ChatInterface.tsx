@@ -31,6 +31,11 @@ import { cn } from "@/lib/utils";
 import { useStickToBottom } from "use-stick-to-bottom";
 import { FilesPopover } from "@/app/components/TasksFilesSidebar";
 import { ConfigSidebar } from "@/app/components/ConfigSidebar";
+import {
+  ResizablePanelGroup,
+  ResizablePanel,
+  ResizableHandle,
+} from "@/components/ui/resizable";
 
 interface ChatInterfaceProps {
   assistant: Assistant | null;
@@ -63,8 +68,9 @@ const getStatusIcon = (status: TodoItem["status"], className?: string) => {
 };
 
 export const ChatInterface = React.memo<ChatInterfaceProps>(({ assistant }) => {
-  const [metaOpen, setMetaOpen] = useState<"tasks" | "files" | "config" | null>(null);
-  const tasksContainerRef = useRef<HTMLDivElement | null>(null);
+  const [rightTab, setRightTab] = useState<"config" | "tasks" | "files">(
+    "config"
+  );
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
 
   const [input, setInput] = useState("");
@@ -75,7 +81,6 @@ export const ChatInterface = React.memo<ChatInterfaceProps>(({ assistant }) => {
     messages,
     todos,
     files,
-    configuration,
     ui,
     setFiles,
     isLoading,
@@ -225,7 +230,6 @@ export const ChatInterface = React.memo<ChatInterfaceProps>(({ assistant }) => {
 
   const hasTasks = todos.length > 0;
   const hasFiles = Object.keys(files).length > 0;
-  const hasConfig = !!configuration?.base_unit;
 
   // Parse out any action requests or review configs from the interrupt
   const actionRequestsMap: Map<string, ActionRequest> | null = useMemo(() => {
@@ -244,12 +248,81 @@ export const ChatInterface = React.memo<ChatInterfaceProps>(({ assistant }) => {
     );
   }, [interrupt]);
 
+  const renderTasks = () => {
+    if (!hasTasks) {
+      return (
+        <p className="px-[18px] py-3 text-sm text-muted-foreground">
+          Brak zadań
+        </p>
+      );
+    }
+    return (
+      <div className="px-[18px] py-3">
+        {Object.entries(groupedTodos)
+          .filter(([_, todos]) => todos.length > 0)
+          .map(([status, todos]) => (
+            <div
+              key={status}
+              className="mb-4"
+            >
+              <h3 className="mb-1 text-[10px] font-semibold uppercase tracking-wider text-tertiary">
+                {
+                  {
+                    pending: "Pending",
+                    in_progress: "In Progress",
+                    completed: "Completed",
+                  }[status]
+                }
+              </h3>
+              <div className="grid grid-cols-[auto_1fr] gap-3 rounded-sm p-1 pl-0 text-sm">
+                {todos.map((todo, index) => (
+                  <Fragment key={`${status}_${todo.id}_${index}`}>
+                    {getStatusIcon(todo.status, "mt-0.5")}
+                    <span className="break-words text-inherit">
+                      {todo.content}
+                    </span>
+                  </Fragment>
+                ))}
+              </div>
+            </div>
+          ))}
+      </div>
+    );
+  };
+
+  const renderFiles = () => {
+    if (!hasFiles) {
+      return (
+        <p className="px-[18px] py-3 text-sm text-muted-foreground">
+          Brak plików
+        </p>
+      );
+    }
+    return (
+      <div className="px-[18px] py-3">
+        <FilesPopover
+          files={files}
+          setFiles={setFiles}
+          editDisabled={isLoading === true || interrupt !== undefined}
+        />
+      </div>
+    );
+  };
+
   return (
-    <div className="flex flex-1 flex-col overflow-hidden">
-      <div
-        className="flex-1 overflow-y-auto overflow-x-hidden overscroll-contain"
-        ref={scrollRef}
+    <ResizablePanelGroup
+      direction="horizontal"
+      className="flex-1"
+    >
+      <ResizablePanel
+        defaultSize={64}
+        minSize={40}
+        className="flex flex-col overflow-hidden"
       >
+        <div
+          className="flex-1 overflow-y-auto overflow-x-hidden overscroll-contain"
+          ref={scrollRef}
+        >
         <div
           className="mx-auto w-full max-w-[1024px] px-6 pb-6 pt-4"
           ref={contentRef}
@@ -296,252 +369,6 @@ export const ChatInterface = React.memo<ChatInterfaceProps>(({ assistant }) => {
             "mx-auto w-[calc(100%-32px)] max-w-[1024px] transition-colors duration-200 ease-in-out"
           )}
         >
-          {(hasTasks || hasFiles || hasConfig) && (
-            <div className="flex max-h-72 flex-col overflow-y-auto border-b border-border bg-sidebar empty:hidden">
-              {!metaOpen && (
-                <>
-                  {(() => {
-                    const activeTask = todos.find(
-                      (t) => t.status === "in_progress"
-                    );
-
-                    const totalTasks = todos.length;
-                    const remainingTasks =
-                      totalTasks - groupedTodos.pending.length;
-                    const isCompleted = totalTasks === remainingTasks;
-
-                    const tasksTrigger = (() => {
-                      if (!hasTasks) return null;
-                      return (
-                        <button
-                          type="button"
-                          onClick={() =>
-                            setMetaOpen((prev) =>
-                              prev === "tasks" ? null : "tasks"
-                            )
-                          }
-                          className="grid w-full cursor-pointer grid-cols-[auto_auto_1fr] items-center gap-3 px-[18px] py-3 text-left"
-                          aria-expanded={metaOpen === "tasks"}
-                        >
-                          {(() => {
-                            if (isCompleted) {
-                              return [
-                                <CheckCircle
-                                  key="icon"
-                                  size={16}
-                                  className="text-success/80"
-                                />,
-                                <span
-                                  key="label"
-                                  className="ml-[1px] min-w-0 truncate text-sm"
-                                >
-                                  All tasks completed
-                                </span>,
-                              ];
-                            }
-
-                            if (activeTask != null) {
-                              return [
-                                <div key="icon">
-                                  {getStatusIcon(activeTask.status)}
-                                </div>,
-                                <span
-                                  key="label"
-                                  className="ml-[1px] min-w-0 truncate text-sm"
-                                >
-                                  Task{" "}
-                                  {totalTasks - groupedTodos.pending.length} of{" "}
-                                  {totalTasks}
-                                </span>,
-                                <span
-                                  key="content"
-                                  className="min-w-0 gap-2 truncate text-sm text-muted-foreground"
-                                >
-                                  {activeTask.content}
-                                </span>,
-                              ];
-                            }
-
-                            return [
-                              <Circle
-                                key="icon"
-                                size={16}
-                                className="text-tertiary/70"
-                              />,
-                              <span
-                                key="label"
-                                className="ml-[1px] min-w-0 truncate text-sm"
-                              >
-                                Task {totalTasks - groupedTodos.pending.length}{" "}
-                                of {totalTasks}
-                              </span>,
-                            ];
-                          })()}
-                        </button>
-                      );
-                    })();
-
-                    const filesTrigger = (() => {
-                      if (!hasFiles) return null;
-                      return (
-                        <button
-                          type="button"
-                          onClick={() =>
-                            setMetaOpen((prev) =>
-                              prev === "files" ? null : "files"
-                            )
-                          }
-                          className="flex flex-shrink-0 cursor-pointer items-center gap-2 px-[18px] py-3 text-left text-sm"
-                          aria-expanded={metaOpen === "files"}
-                        >
-                          <FileIcon size={16} />
-                          Files (State)
-                          <span className="h-4 min-w-4 rounded-full bg-[#2F6868] px-0.5 text-center text-[10px] leading-[16px] text-white">
-                            {Object.keys(files).length}
-                          </span>
-                        </button>
-                      );
-                    })();
-
-                    const configTrigger = (() => {
-                      if (!hasConfig) return null;
-                      return (
-                        <button
-                          type="button"
-                          onClick={() =>
-                            setMetaOpen((prev) =>
-                              prev === "config" ? null : "config"
-                            )
-                          }
-                          className="flex flex-shrink-0 cursor-pointer items-center gap-2 px-[18px] py-3 text-left text-sm"
-                          aria-expanded={metaOpen === "config"}
-                        >
-                          Konfiguracja
-                        </button>
-                      );
-                    })();
-
-                    return (
-                      <div className="grid grid-cols-[1fr_auto_auto_auto] items-center">
-                        {tasksTrigger}
-                        {filesTrigger}
-                        {configTrigger}
-                      </div>
-                    );
-                  })()}
-                </>
-              )}
-
-              {metaOpen && (
-                <>
-                  <div className="sticky top-0 flex items-stretch bg-sidebar text-sm">
-                    {hasTasks && (
-                      <button
-                        type="button"
-                        className="py-3 pr-4 first:pl-[18px] aria-expanded:font-semibold"
-                        onClick={() =>
-                          setMetaOpen((prev) =>
-                            prev === "tasks" ? null : "tasks"
-                          )
-                        }
-                        aria-expanded={metaOpen === "tasks"}
-                      >
-                        Tasks
-                      </button>
-                    )}
-                    {hasFiles && (
-                      <button
-                        type="button"
-                        className="inline-flex items-center gap-2 py-3 pr-4 first:pl-[18px] aria-expanded:font-semibold"
-                        onClick={() =>
-                          setMetaOpen((prev) =>
-                            prev === "files" ? null : "files"
-                          )
-                        }
-                        aria-expanded={metaOpen === "files"}
-                      >
-                        Files (State)
-                        <span className="h-4 min-w-4 rounded-full bg-[#2F6868] px-0.5 text-center text-[10px] leading-[16px] text-white">
-                          {Object.keys(files).length}
-                        </span>
-                      </button>
-                    )}
-                    {hasConfig && (
-                      <button
-                        type="button"
-                        className="py-3 pr-4 first:pl-[18px] aria-expanded:font-semibold"
-                        onClick={() =>
-                          setMetaOpen((prev) =>
-                            prev === "config" ? null : "config"
-                          )
-                        }
-                        aria-expanded={metaOpen === "config"}
-                      >
-                        Konfiguracja
-                      </button>
-                    )}
-                    <button
-                      aria-label="Close"
-                      className="flex-1"
-                      onClick={() => setMetaOpen(null)}
-                    />
-                  </div>
-                  <div
-                    ref={tasksContainerRef}
-                    className="px-[18px]"
-                  >
-                    {metaOpen === "tasks" &&
-                      Object.entries(groupedTodos)
-                        .filter(([_, todos]) => todos.length > 0)
-                        .map(([status, todos]) => (
-                          <div
-                            key={status}
-                            className="mb-4"
-                          >
-                            <h3 className="mb-1 text-[10px] font-semibold uppercase tracking-wider text-tertiary">
-                              {
-                                {
-                                  pending: "Pending",
-                                  in_progress: "In Progress",
-                                  completed: "Completed",
-                                }[status]
-                              }
-                            </h3>
-                            <div className="grid grid-cols-[auto_1fr] gap-3 rounded-sm p-1 pl-0 text-sm">
-                              {todos.map((todo, index) => (
-                                <Fragment key={`${status}_${todo.id}_${index}`}>
-                                  {getStatusIcon(todo.status, "mt-0.5")}
-                                  <span className="break-words text-inherit">
-                                    {todo.content}
-                                  </span>
-                                </Fragment>
-                              ))}
-                            </div>
-                          </div>
-                        ))}
-
-                    {metaOpen === "files" && (
-                      <div className="mb-6">
-                        <FilesPopover
-                          files={files}
-                          setFiles={setFiles}
-                          editDisabled={
-                            isLoading === true || interrupt !== undefined
-                          }
-                        />
-                      </div>
-                    )}
-
-                    {metaOpen === "config" && (
-                      <div className="mb-6">
-                        <ConfigSidebar />
-                      </div>
-                    )}
-                  </div>
-                </>
-              )}
-            </div>
-          )}
           <form
             onSubmit={handleSubmit}
             className="flex flex-col"
@@ -580,7 +407,43 @@ export const ChatInterface = React.memo<ChatInterfaceProps>(({ assistant }) => {
           </form>
         </div>
       </div>
-    </div>
+      </ResizablePanel>
+      <ResizableHandle withHandle />
+      <ResizablePanel
+        defaultSize={36}
+        minSize={22}
+        className="flex min-h-0 flex-col border-l border-border"
+      >
+        <div className="flex items-stretch border-b border-border text-sm">
+          <button
+            type="button"
+            className={cn("px-3 py-2", rightTab === "config" && "font-semibold")}
+            onClick={() => setRightTab("config")}
+          >
+            Koszyk
+          </button>
+          <button
+            type="button"
+            className={cn("px-3 py-2", rightTab === "tasks" && "font-semibold")}
+            onClick={() => setRightTab("tasks")}
+          >
+            Tasks{hasTasks ? ` (${todos.length})` : ""}
+          </button>
+          <button
+            type="button"
+            className={cn("px-3 py-2", rightTab === "files" && "font-semibold")}
+            onClick={() => setRightTab("files")}
+          >
+            Files{hasFiles ? ` (${Object.keys(files).length})` : ""}
+          </button>
+        </div>
+        <div className="min-h-0 flex-1 overflow-y-auto">
+          {rightTab === "config" && <ConfigSidebar />}
+          {rightTab === "tasks" && renderTasks()}
+          {rightTab === "files" && renderFiles()}
+        </div>
+      </ResizablePanel>
+    </ResizablePanelGroup>
   );
 });
 
