@@ -15,7 +15,6 @@ import {
   CheckCircle,
   Clock,
   Circle,
-  FileIcon,
 } from "lucide-react";
 import { ChatMessage } from "@/app/components/ChatMessage";
 import type {
@@ -312,6 +311,7 @@ export const ChatInterface = React.memo<ChatInterfaceProps>(({ assistant }) => {
   return (
     <ResizablePanelGroup
       direction="horizontal"
+      autoSaveId="chat-layout"
       className="flex-1"
     >
       <ResizablePanel
