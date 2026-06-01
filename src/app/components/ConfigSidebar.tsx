@@ -3,12 +3,12 @@
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
 import { useChatContext } from "@/providers/ChatProvider";
-import { getConfig } from "@/lib/config";
+import { getConfig, getDefaultConfig } from "@/lib/config";
 import type { ConfigEntry } from "@/app/types/types";
 import { FileText, ImageOff } from "lucide-react";
 
 function configuratorBase(): string {
-  return getConfig()?.configuratorUrl ?? "";
+  return getConfig()?.configuratorUrl || getDefaultConfig().configuratorUrl || "";
 }
 
 function EntryImage({ entry, large }: { entry: ConfigEntry; large?: boolean }) {
