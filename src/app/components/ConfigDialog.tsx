@@ -12,7 +12,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import { StandaloneConfig } from "@/lib/config";
+import { StandaloneConfig, getDefaultConfig } from "@/lib/config";
 
 interface ConfigDialogProps {
   open: boolean;
@@ -36,12 +36,16 @@ export function ConfigDialog({
   const [langsmithApiKey, setLangsmithApiKey] = useState(
     initialConfig?.langsmithApiKey || ""
   );
+  const [configuratorUrl, setConfiguratorUrl] = useState(
+    initialConfig?.configuratorUrl || getDefaultConfig().configuratorUrl || ""
+  );
 
   useEffect(() => {
     if (open && initialConfig) {
       setDeploymentUrl(initialConfig.deploymentUrl);
       setAssistantId(initialConfig.assistantId);
       setLangsmithApiKey(initialConfig.langsmithApiKey || "");
+      setConfiguratorUrl(initialConfig.configuratorUrl || getDefaultConfig().configuratorUrl || "");
     }
   }, [open, initialConfig]);
 
@@ -55,6 +59,7 @@ export function ConfigDialog({
       deploymentUrl,
       assistantId,
       langsmithApiKey: langsmithApiKey || undefined,
+      configuratorUrl: configuratorUrl || undefined,
     });
     onOpenChange(false);
   };
@@ -102,6 +107,18 @@ export function ConfigDialog({
               placeholder="lsv2_pt_..."
               value={langsmithApiKey}
               onChange={(e) => setLangsmithApiKey(e.target.value)}
+            />
+          </div>
+          <div className="grid gap-2">
+            <Label htmlFor="configuratorUrl">
+              Configurator URL{" "}
+              <span className="text-muted-foreground">(Optional)</span>
+            </Label>
+            <Input
+              id="configuratorUrl"
+              placeholder="http://host:8100 (lokalnie :18100)"
+              value={configuratorUrl}
+              onChange={(e) => setConfiguratorUrl(e.target.value)}
             />
           </div>
         </div>
