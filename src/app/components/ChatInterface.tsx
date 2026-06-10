@@ -30,6 +30,8 @@ import { cn } from "@/lib/utils";
 import { useStickToBottom } from "use-stick-to-bottom";
 import { FilesPopover } from "@/app/components/TasksFilesSidebar";
 import { ConfigSidebar } from "@/app/components/ConfigSidebar";
+import { SubAgentPanel } from "@/app/components/SubAgentPanel";
+import { useSubAgents } from "@/app/hooks/useSubAgents";
 import {
   ResizablePanelGroup,
   ResizablePanel,
@@ -67,9 +69,9 @@ const getStatusIcon = (status: TodoItem["status"], className?: string) => {
 };
 
 export const ChatInterface = React.memo<ChatInterfaceProps>(({ assistant }) => {
-  const [rightTab, setRightTab] = useState<"config" | "tasks" | "files">(
-    "config"
-  );
+  const [rightTab, setRightTab] = useState<
+    "config" | "tasks" | "files" | "subagents"
+  >("config");
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
 
   const [input, setInput] = useState("");
@@ -220,6 +222,10 @@ export const ChatInterface = React.memo<ChatInterfaceProps>(({ assistant }) => {
       };
     });
   }, [messages, interrupt]);
+
+  const subAgents = useSubAgents(messages);
+  const hasSubAgents = subAgents.length > 0;
+  const activeSubAgents = subAgents.filter((s) => s.status === "active").length;
 
   const groupedTodos = {
     in_progress: todos.filter((t) => t.status === "in_progress"),
@@ -436,11 +442,27 @@ export const ChatInterface = React.memo<ChatInterfaceProps>(({ assistant }) => {
           >
             Files{hasFiles ? ` (${Object.keys(files).length})` : ""}
           </button>
+          <button
+            type="button"
+            className={cn(
+              "px-3 py-2",
+              rightTab === "subagents" && "font-semibold"
+            )}
+            onClick={() => setRightTab("subagents")}
+          >
+            Specjaliści
+            {hasSubAgents
+              ? activeSubAgents > 0
+                ? ` (${activeSubAgents}/${subAgents.length})`
+                : ` (${subAgents.length})`
+              : ""}
+          </button>
         </div>
         <div className="min-h-0 flex-1 overflow-y-auto">
           {rightTab === "config" && <ConfigSidebar />}
           {rightTab === "tasks" && renderTasks()}
           {rightTab === "files" && renderFiles()}
+          {rightTab === "subagents" && <SubAgentPanel subAgents={subAgents} />}
         </div>
       </ResizablePanel>
     </ResizablePanelGroup>
