@@ -11,8 +11,29 @@ export interface SubAgent {
   name: string;
   subAgentName: string;
   input: Record<string, unknown>;
-  output?: Record<string, unknown>;
+  /** Raw stringified task ToolMessage content, when present. */
+  rawOutput?: string;
+  /** Parsed SpecialistResult if the task output was a SpecialistResult JSON; else null. */
+  output: SpecialistResult | null;
   status: "pending" | "active" | "completed" | "error";
+}
+
+export interface ComponentOption {
+  sku: string;
+  name: string;
+  specs: Record<string, unknown>;
+  note: string;
+  compatible: boolean;
+}
+
+export interface SpecialistResult {
+  component: string;
+  category_detected: string | null;
+  query_echo: Record<string, unknown>;
+  options: ComponentOption[];
+  recommended_sku: string | null;
+  total_matched: number;
+  pagination_hint: string | null;
 }
 
 export interface FileItem {
