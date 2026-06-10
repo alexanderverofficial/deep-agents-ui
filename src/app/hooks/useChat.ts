@@ -26,6 +26,21 @@ export type StateType = {
   ui?: any;
 };
 
+/**
+ * A subgraph dispatched via the `task` tool streams under namespace
+ * segments like ["tools:<tool_call_id>", ...]. Returns the originating
+ * task tool_call_id from such a namespace, or null.
+ */
+export function taskCallIdFromNamespace(
+  namespace: string[] | undefined | null
+): string | null {
+  if (!namespace) return null;
+  for (const seg of namespace) {
+    if (seg.startsWith("tools:")) return seg.slice("tools:".length);
+  }
+  return null;
+}
+
 export function useChat({
   activeAssistant,
   onHistoryRevalidate,
@@ -64,6 +79,9 @@ export function useChat({
             messages: [...(prev.messages ?? []), newMessage],
           }),
           config: { ...(activeAssistant?.config ?? {}), recursion_limit: 100 },
+          // Stream nodes of subgraphs (specialist subagents) so their progress surfaces live
+          streamSubgraphs: true,
+          streamMode: ["values", "messages"],
         }
       );
       // Update thread list immediately when sending a message
@@ -120,6 +138,9 @@ export function useChat({
         ...(hasTaskToolCall
           ? { interruptAfter: ["tools"] }
           : { interruptBefore: ["tools"] }),
+        // Stream nodes of subgraphs (specialist subagents) so their progress surfaces live
+        streamSubgraphs: true,
+        streamMode: ["values", "messages"],
       });
       // Update thread list when continuing stream
       onHistoryRevalidate?.();
