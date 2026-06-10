@@ -15,6 +15,7 @@ import {
   extractSubAgentContent,
   extractStringFromMessageContent,
 } from "@/app/utils/utils";
+import { parseSpecialistResult } from "@/app/utils/specialistResult";
 import { cn } from "@/lib/utils";
 
 interface ChatMessageProps {
@@ -64,8 +65,12 @@ export const ChatMessage = React.memo<ChatMessageProps>(
             name: toolCall.name,
             subAgentName: subagentType,
             input: toolCall.args,
-            output: toolCall.result ? { result: toolCall.result } : undefined,
-            status: toolCall.status,
+            rawOutput: toolCall.result,
+            output: toolCall.result
+              ? parseSpecialistResult(toolCall.result)
+              : null,
+            status:
+              toolCall.status === "completed" ? "completed" : "active",
           } as SubAgent;
         });
     }, [toolCalls]);
@@ -174,13 +179,13 @@ export const ChatMessage = React.memo<ChatMessageProps>(
                             content={extractSubAgentContent(subAgent.input)}
                           />
                         </div>
-                        {subAgent.output && (
+                        {subAgent.rawOutput && (
                           <>
                             <h4 className="text-primary/70 mb-2 text-xs font-semibold uppercase tracking-wider">
                               Output
                             </h4>
                             <MarkdownContent
-                              content={extractSubAgentContent(subAgent.output)}
+                              content={extractSubAgentContent(subAgent.rawOutput)}
                             />
                           </>
                         )}
