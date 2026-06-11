@@ -5,10 +5,12 @@ export interface StandaloneConfig {
   configuratorUrl?: string;
 }
 
-// v2: bump porzuca stary cache z configuratorUrl=:8100 (kolizja z email-monitor),
-// wymusza świeży seed z getDefaultConfig() (port z NEXT_PUBLIC_CONFIGURATOR_PORT).
-const CONFIG_KEY = "deep-agent-config-v2";
-const DEFAULT_ASSISTANT_ID = "panel-pc-deep-agent";
+// v3: bump porzuca stary cache z assistantId="panel-pc-deep-agent" — domyślnym agentem
+// jest teraz "main-configurator" (orchestrator routujący do panel/box/rack). Zwracający
+// użytkownicy z v2 cache muszą dostać nowy default, stąd bump klucza.
+// (v2 wcześniej porzuciło cache z configuratorUrl=:8100, kolizja z email-monitor.)
+const CONFIG_KEY = "deep-agent-config-v3";
+const DEFAULT_ASSISTANT_ID = "main-configurator";
 
 function defaultDeploymentUrl(): string {
   if (typeof window === "undefined") return "";
