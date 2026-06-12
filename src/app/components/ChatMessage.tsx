@@ -34,6 +34,16 @@ interface ChatMessageProps {
   graphId?: string;
 }
 
+
+const ERROR_MARKERS =
+  /GraphRecursionError|Recursion limit|Traceback \(most recent call last\)|UserInterrupt|"error"\s*:/i;
+
+function subAgentStatus(toolCall: ToolCall): SubAgent["status"] {
+  if (toolCall.status !== "completed") return "active";
+  const result = typeof toolCall.result === "string" ? toolCall.result : "";
+  return ERROR_MARKERS.test(result) ? "error" : "completed";
+}
+
 export const ChatMessage = React.memo<ChatMessageProps>(
   ({
     message,
@@ -73,8 +83,7 @@ export const ChatMessage = React.memo<ChatMessageProps>(
             output: toolCall.result
               ? parseSpecialistResult(toolCall.result)
               : null,
-            status:
-              toolCall.status === "completed" ? "completed" : "active",
+            status: subAgentStatus(toolCall),
           } as SubAgent;
         });
     }, [toolCalls]);

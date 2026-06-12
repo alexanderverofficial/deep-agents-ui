@@ -86,7 +86,14 @@ function MiniCard({ label, entry, onEdit }:
   return (
     <div className="rounded-md border border-border px-3 py-2">
       <div className="flex items-center justify-between">
-        <span className="text-[10px] font-semibold uppercase tracking-wider text-zinc-500">{label}</span>
+        <span className="flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wider text-zinc-500">
+          {label}
+          {Number(entry.quantity) > 1 && (
+            <span className="rounded bg-zinc-200 px-1 font-mono text-[10px] text-zinc-700">
+              ×{Number(entry.quantity)}
+            </span>
+          )}
+        </span>
         <Button variant="ghost" size="sm" className="h-5 px-1.5 py-0 text-[10px]" onClick={onEdit}>edytuj</Button>
       </div>
       <div className="mt-1 flex items-center gap-2">
@@ -122,7 +129,8 @@ export function ConfigSidebar() {
 
   const hasAny =
     !!cfg &&
-    (!!cfg.base_unit ||
+    ((cfg.variants?.length ?? 0) > 0 ||
+      !!cfg.base_unit ||
       SINGLE_SLOTS.some(([k]) => !!cfg[k]) ||
       (cfg.ram_entries?.length ?? 0) > 0 ||
       (cfg.storage_entries?.length ?? 0) > 0);
@@ -137,27 +145,50 @@ export function ConfigSidebar() {
     );
   }
 
+  const renderEntries = (c: Record<string, any>, keyPrefix = "") => (
+    <>
+      {c.base_unit && (
+        <BaseCard entry={c.base_unit}
+          onEdit={() => ask("Chcę zmienić jednostkę bazową. Pokaż dostępne opcje.")} />
+      )}
+      {SINGLE_SLOTS.map(([key, label, editMsg]) =>
+        c[key] ? (
+          <MiniCard key={`${keyPrefix}${key}`} label={label} entry={c[key]}
+            onEdit={() => ask(editMsg)} />
+        ) : null
+      )}
+      {(c.ram_entries ?? []).map((e: ConfigEntry, i: number) => (
+        <MiniCard key={`${keyPrefix}ram-${i}`} label="RAM" entry={e}
+          onEdit={() => ask("Chcę zmienić konfigurację RAM. Pokaż kompatybilne opcje.")} />
+      ))}
+      {(c.storage_entries ?? []).map((e: ConfigEntry, i: number) => (
+        <MiniCard key={`${keyPrefix}st-${i}`} label="Storage" entry={e}
+          onEdit={() => ask("Chcę zmienić dysk/storage. Pokaż kompatybilne opcje.")} />
+      ))}
+    </>
+  );
+
+  const variants: Array<Record<string, any>> = Array.isArray(cfg!.variants)
+    ? cfg!.variants
+    : [];
+
   return (
     <ScrollArea className="h-full">
       <div className="space-y-2 p-3">
-        {cfg!.base_unit && (
-          <BaseCard entry={cfg!.base_unit}
-            onEdit={() => ask("Chcę zmienić jednostkę bazową. Pokaż dostępne opcje.")} />
+        {variants.length > 0 ? (
+          // multiple proposed configurations — one collapsible section per option
+          variants.map((variant, i) => (
+            <details key={`variant-${i}`} open={i === 0}
+              className="rounded-lg border border-border">
+              <summary className="cursor-pointer select-none px-3 py-2 text-xs font-semibold">
+                {variant.label || `Opcja ${i + 1}`}
+              </summary>
+              <div className="space-y-2 p-2 pt-0">{renderEntries(variant, `v${i}-`)}</div>
+            </details>
+          ))
+        ) : (
+          renderEntries(cfg!)
         )}
-        {SINGLE_SLOTS.map(([key, label, editMsg]) =>
-          cfg![key] ? (
-            <MiniCard key={key} label={label} entry={cfg![key]}
-              onEdit={() => ask(editMsg)} />
-          ) : null
-        )}
-        {(cfg!.ram_entries ?? []).map((e: ConfigEntry, i: number) => (
-          <MiniCard key={`ram-${i}`} label="RAM" entry={e}
-            onEdit={() => ask("Chcę zmienić konfigurację RAM. Pokaż kompatybilne opcje.")} />
-        ))}
-        {(cfg!.storage_entries ?? []).map((e: ConfigEntry, i: number) => (
-          <MiniCard key={`st-${i}`} label="Storage" entry={e}
-            onEdit={() => ask("Chcę zmienić dysk/storage. Pokaż kompatybilne opcje.")} />
-        ))}
       </div>
     </ScrollArea>
   );

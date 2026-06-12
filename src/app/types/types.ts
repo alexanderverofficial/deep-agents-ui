@@ -60,6 +60,8 @@ export interface ConfigEntry {
   image_url: string | null;
   datasheet_url: string | null;
   specs: ConfigEntrySpecs;
+  /** How many identical units (e.g. 2× 16GB RAM sticks). Default 1. */
+  quantity?: number;
 }
 export interface PanelPcConfiguration {
   base_unit: ConfigEntry | null;

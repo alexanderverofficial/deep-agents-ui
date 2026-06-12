@@ -30,8 +30,6 @@ import { cn } from "@/lib/utils";
 import { useStickToBottom } from "use-stick-to-bottom";
 import { FilesPopover } from "@/app/components/TasksFilesSidebar";
 import { ConfigSidebar } from "@/app/components/ConfigSidebar";
-import { SubAgentPanel } from "@/app/components/SubAgentPanel";
-import { useSubAgents } from "@/app/hooks/useSubAgents";
 import {
   ResizablePanelGroup,
   ResizablePanel,
@@ -70,7 +68,7 @@ const getStatusIcon = (status: TodoItem["status"], className?: string) => {
 
 export const ChatInterface = React.memo<ChatInterfaceProps>(({ assistant }) => {
   const [rightTab, setRightTab] = useState<
-    "config" | "tasks" | "files" | "subagents"
+    "config" | "tasks" | "files"
   >("config");
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
 
@@ -118,6 +116,20 @@ export const ChatInterface = React.memo<ChatInterfaceProps>(({ assistant }) => {
     [handleSubmit, submitDisabled]
   );
 
+  // Tools that exist ONLY inside specialist subgraphs (no orchestrator owns them).
+  // With streamSubgraphs the SDK flattens subgraph messages into stream.messages —
+  // these names let us precisely drop specialist-internal traffic from the chat
+  // (it is summarized inside the specialist card instead).
+  const SPECIALIST_INTERNAL_TOOLS = useMemo(
+    () =>
+      new Set([
+        "search_cpu", "search_ram", "search_storage", "search_psu",
+        "search_motherboard", "search_chassis", "search_cooler", "search_gpu",
+        "find_compatible_os_box", "SpecialistResult",
+      ]),
+    []
+  );
+
   // TODO: can we make this part of the hook?
   const processedMessages = useMemo(() => {
     /*
@@ -129,7 +141,30 @@ export const ChatInterface = React.memo<ChatInterfaceProps>(({ assistant }) => {
       string,
       { message: Message; toolCalls: ToolCall[] }
     >();
+    // Pre-pass: identify specialist-subgraph messages (ALL their tool calls are
+    // specialist-internal) and remember their tool_call_ids so the matching tool
+    // results are dropped too.
+    const droppedMessageIds = new Set<string>();
+    const droppedToolCallIds = new Set<string>();
     messages.forEach((message: Message) => {
+      if (message.type !== "ai") return;
+      const tcs = Array.isArray(message.tool_calls)
+        ? message.tool_calls.filter((tc: { name?: string }) => tc.name !== "")
+        : [];
+      if (
+        tcs.length > 0 &&
+        tcs.every((tc: { name?: string }) =>
+          SPECIALIST_INTERNAL_TOOLS.has(tc.name || "")
+        )
+      ) {
+        if (message.id) droppedMessageIds.add(message.id);
+        tcs.forEach((tc: { id?: string }) => {
+          if (tc.id) droppedToolCallIds.add(tc.id);
+        });
+      }
+    });
+    messages.forEach((message: Message) => {
+      if (message.id && droppedMessageIds.has(message.id)) return;
       if (message.type === "ai") {
         const toolCallsInMessage: Array<{
           id?: string;
@@ -192,6 +227,9 @@ export const ChatInterface = React.memo<ChatInterfaceProps>(({ assistant }) => {
         if (!toolCallId) {
           return;
         }
+        if (droppedToolCallIds.has(toolCallId)) {
+          return; // result of a specialist-internal call — stays inside the card
+        }
         for (const [, data] of messageMap.entries()) {
           const toolCallIndex = data.toolCalls.findIndex(
             (tc: ToolCall) => tc.id === toolCallId
@@ -221,11 +259,8 @@ export const ChatInterface = React.memo<ChatInterfaceProps>(({ assistant }) => {
         showAvatar: data.message.type !== prevMessage?.type,
       };
     });
-  }, [messages, interrupt]);
+  }, [messages, interrupt, SPECIALIST_INTERNAL_TOOLS]);
 
-  const subAgents = useSubAgents(messages);
-  const hasSubAgents = subAgents.length > 0;
-  const activeSubAgents = subAgents.filter((s) => s.status === "active").length;
 
   const groupedTodos = {
     in_progress: todos.filter((t) => t.status === "in_progress"),
@@ -442,27 +477,11 @@ export const ChatInterface = React.memo<ChatInterfaceProps>(({ assistant }) => {
           >
             Files{hasFiles ? ` (${Object.keys(files).length})` : ""}
           </button>
-          <button
-            type="button"
-            className={cn(
-              "px-3 py-2",
-              rightTab === "subagents" && "font-semibold"
-            )}
-            onClick={() => setRightTab("subagents")}
-          >
-            Specjaliści
-            {hasSubAgents
-              ? activeSubAgents > 0
-                ? ` (${activeSubAgents}/${subAgents.length})`
-                : ` (${subAgents.length})`
-              : ""}
-          </button>
         </div>
         <div className="min-h-0 flex-1 overflow-y-auto">
           {rightTab === "config" && <ConfigSidebar />}
           {rightTab === "tasks" && renderTasks()}
           {rightTab === "files" && renderFiles()}
-          {rightTab === "subagents" && <SubAgentPanel subAgents={subAgents} />}
         </div>
       </ResizablePanel>
     </ResizablePanelGroup>
