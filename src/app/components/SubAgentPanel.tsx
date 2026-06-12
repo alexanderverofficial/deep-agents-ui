@@ -2,7 +2,11 @@
 
 import React from "react";
 import { CheckCircle2, Loader2, AlertCircle, Circle } from "lucide-react";
-import type { SubAgent, SpecialistResult, ComponentOption } from "@/app/types/types";
+import type { SubAgent } from "@/app/types/types";
+import {
+  SpecialistResultView,
+  PrettyPayload,
+} from "@/app/components/SpecialistResultView";
 import { cn } from "@/lib/utils";
 
 interface SubAgentPanelProps {
@@ -35,58 +39,6 @@ const STATUS_META: Record<
   },
 };
 
-function specValue(v: unknown): string {
-  if (v == null) return "";
-  if (typeof v === "string" || typeof v === "number" || typeof v === "boolean") {
-    return String(v);
-  }
-  return JSON.stringify(v);
-}
-
-function summarizeSpecs(specs: Record<string, unknown>): string {
-  const entries = Object.entries(specs).slice(0, 4);
-  return entries.map(([k, v]) => `${k}: ${specValue(v)}`).join(" · ");
-}
-
-const OptionsTable = React.memo<{ result: SpecialistResult }>(({ result }) => (
-  <table className="w-full table-fixed border-collapse text-xs">
-    <thead>
-      <tr className="text-left text-tertiary">
-        <th className="w-[38%] py-1 pr-2 font-medium">SKU</th>
-        <th className="w-[62%] py-1 font-medium">Nazwa / specyfikacja</th>
-      </tr>
-    </thead>
-    <tbody>
-      {result.options.map((opt: ComponentOption) => {
-        const isRecommended = opt.sku === result.recommended_sku;
-        return (
-          <tr
-            key={opt.sku}
-            className={cn(
-              "border-t border-border align-top",
-              isRecommended && "bg-success/10"
-            )}
-          >
-            <td className="break-words py-1 pr-2 font-mono">
-              {opt.sku}
-              {isRecommended && (
-                <span className="ml-1 rounded bg-success/20 px-1 text-[10px] text-success">
-                  rekom.
-                </span>
-              )}
-            </td>
-            <td className="break-words py-1">
-              <div className="font-medium text-primary">{opt.name}</div>
-              <div className="text-tertiary">{summarizeSpecs(opt.specs)}</div>
-            </td>
-          </tr>
-        );
-      })}
-    </tbody>
-  </table>
-));
-OptionsTable.displayName = "OptionsTable";
-
 const SubAgentCard = React.memo<{ subAgent: SubAgent }>(({ subAgent }) => {
   const meta = STATUS_META[subAgent.status];
   const result = subAgent.output;
@@ -103,29 +55,13 @@ const SubAgentCard = React.memo<{ subAgent: SubAgent }>(({ subAgent }) => {
       </div>
 
       {result ? (
-        <>
-          <div className="text-xs text-tertiary">
-            <span className="font-medium text-primary">{result.total_matched} dopasowań</span>
-            {result.recommended_sku ? (
-              <>
-                {" · rekomendacja: "}
-                <span className="font-mono text-primary">{result.recommended_sku}</span>
-              </>
-            ) : null}
-          </div>
-          {result.options.length > 0 ? (
-            <OptionsTable result={result} />
-          ) : (
-            <p className="text-xs text-tertiary">Brak opcji.</p>
-          )}
-          {result.pagination_hint && (
-            <p className="text-[10px] text-tertiary">{result.pagination_hint}</p>
-          )}
-        </>
+        <SpecialistResultView result={result} />
       ) : subAgent.status === "completed" ? (
-        <pre className="max-h-48 overflow-auto whitespace-pre-wrap break-words rounded bg-surface p-2 text-[11px] text-primary">
-          {subAgent.rawOutput ?? "(brak wyniku)"}
-        </pre>
+        subAgent.rawOutput ? (
+          <PrettyPayload value={subAgent.rawOutput} />
+        ) : (
+          <p className="text-xs text-tertiary">(brak wyniku)</p>
+        )
       ) : (
         <p className="text-xs text-tertiary">Specjalista jeszcze pracuje…</p>
       )}

@@ -39,9 +39,16 @@ function EntryImage({ entry, large }: { entry: ConfigEntry; large?: boolean }) {
 }
 
 function SpecLines({ entry }: { entry: ConfigEntry }) {
-  const s = entry.specs || {};
-  const lines = [s.screen, s.cpu, s.ram, s.ip && `IP: ${s.ip}`, s.temp,
-                 s.capacity, s.type, s.power].filter(Boolean) as string[];
+  const s = (entry.specs || {}) as Record<string, unknown>;
+  let lines = [s.screen, s.cpu, s.ram, s.ip && `IP: ${s.ip}`, s.temp,
+               s.capacity, s.type, s.power].filter(Boolean) as string[];
+  if (lines.length === 0) {
+    // generic fallback for box/rack entries (capacity_gb, ddr_gen, socket, wattage_w, ...)
+    lines = Object.entries(s)
+      .filter(([, v]) => v != null && typeof v !== "object")
+      .slice(0, 3)
+      .map(([k, v]) => `${k}: ${v}`);
+  }
   if (lines.length === 0) return null;
   return (
     <ul className="mt-1 space-y-0.5 text-xs text-muted-foreground">
@@ -93,16 +100,38 @@ function MiniCard({ label, entry, onEdit }:
   );
 }
 
+/** Single-entry slots across ALL config shapes (panel/box/rack), in render order.
+ *  panel: base_unit, ram_entries[], storage_entries[], psu, os
+ *  box:   base_unit, cpu, ram, storage_entries[], os
+ *  rack:  cpu, motherboard, ram, cooler, chassis, psu, storage_entries[], gpu, os */
+const SINGLE_SLOTS: Array<[key: string, label: string, editMsg: string]> = [
+  ["motherboard", "Płyta główna", "Chcę zmienić płytę główną. Pokaż kompatybilne opcje."],
+  ["cpu", "CPU", "Chcę zmienić procesor. Pokaż kompatybilne opcje."],
+  ["ram", "RAM", "Chcę zmienić konfigurację RAM. Pokaż kompatybilne opcje."],
+  ["cooler", "Chłodzenie", "Chcę zmienić chłodzenie CPU. Pokaż kompatybilne opcje."],
+  ["chassis", "Obudowa", "Chcę zmienić obudowę. Pokaż kompatybilne opcje."],
+  ["gpu", "GPU", "Chcę zmienić kartę graficzną. Pokaż kompatybilne opcje."],
+  ["psu", "PSU", "Chcę zmienić zasilacz (PSU). Pokaż kompatybilne opcje."],
+  ["os", "System (OS)", "Chcę zmienić system operacyjny. Pokaż dostępne opcje."],
+];
+
 export function ConfigSidebar() {
   const { configuration, sendMessage } = useChatContext();
-  const cfg = configuration;
+  const cfg = configuration as Record<string, any> | null;
   const ask = (msg: string) => sendMessage(msg);
 
-  if (!cfg || !cfg.base_unit) {
+  const hasAny =
+    !!cfg &&
+    (!!cfg.base_unit ||
+      SINGLE_SLOTS.some(([k]) => !!cfg[k]) ||
+      (cfg.ram_entries?.length ?? 0) > 0 ||
+      (cfg.storage_entries?.length ?? 0) > 0);
+
+  if (!hasAny) {
     return (
       <div className="flex h-full items-center justify-center px-4 py-6 text-center">
         <p className="text-xs text-muted-foreground">
-          Brak konfiguracji. Zacznij rozmowę, aby dobrać Panel PC.
+          Brak konfiguracji. Zacznij rozmowę, aby dobrać komputer.
         </p>
       </div>
     );
@@ -111,24 +140,24 @@ export function ConfigSidebar() {
   return (
     <ScrollArea className="h-full">
       <div className="space-y-2 p-3">
-        <BaseCard entry={cfg.base_unit}
-          onEdit={() => ask("Chcę zmienić jednostkę bazową Panel PC. Pokaż dostępne opcje.")} />
-        {(cfg.ram_entries ?? []).map((e, i) => (
+        {cfg!.base_unit && (
+          <BaseCard entry={cfg!.base_unit}
+            onEdit={() => ask("Chcę zmienić jednostkę bazową. Pokaż dostępne opcje.")} />
+        )}
+        {SINGLE_SLOTS.map(([key, label, editMsg]) =>
+          cfg![key] ? (
+            <MiniCard key={key} label={label} entry={cfg![key]}
+              onEdit={() => ask(editMsg)} />
+          ) : null
+        )}
+        {(cfg!.ram_entries ?? []).map((e: ConfigEntry, i: number) => (
           <MiniCard key={`ram-${i}`} label="RAM" entry={e}
             onEdit={() => ask("Chcę zmienić konfigurację RAM. Pokaż kompatybilne opcje.")} />
         ))}
-        {(cfg.storage_entries ?? []).map((e, i) => (
+        {(cfg!.storage_entries ?? []).map((e: ConfigEntry, i: number) => (
           <MiniCard key={`st-${i}`} label="Storage" entry={e}
             onEdit={() => ask("Chcę zmienić dysk/storage. Pokaż kompatybilne opcje.")} />
         ))}
-        {cfg.psu && (
-          <MiniCard label="PSU" entry={cfg.psu}
-            onEdit={() => ask("Chcę zmienić zasilacz (PSU). Pokaż kompatybilne opcje.")} />
-        )}
-        {cfg.os && (
-          <MiniCard label="System (OS)" entry={cfg.os}
-            onEdit={() => ask("Chcę zmienić system operacyjny. Pokaż dostępne opcje.")} />
-        )}
       </div>
     </ScrollArea>
   );

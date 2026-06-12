@@ -16,6 +16,10 @@ import {
   extractStringFromMessageContent,
 } from "@/app/utils/utils";
 import { parseSpecialistResult } from "@/app/utils/specialistResult";
+import {
+  SpecialistResultView,
+  PrettyPayload,
+} from "@/app/components/SpecialistResultView";
 import { cn } from "@/lib/utils";
 
 interface ChatMessageProps {
@@ -179,14 +183,19 @@ export const ChatMessage = React.memo<ChatMessageProps>(
                             content={extractSubAgentContent(subAgent.input)}
                           />
                         </div>
-                        {subAgent.rawOutput && (
+                        {(subAgent.output || subAgent.rawOutput) && (
                           <>
                             <h4 className="text-primary/70 mb-2 text-xs font-semibold uppercase tracking-wider">
-                              Output
+                              Wynik
                             </h4>
-                            <MarkdownContent
-                              content={extractSubAgentContent(subAgent.rawOutput)}
-                            />
+                            {subAgent.output ? (
+                              // parsed SpecialistResult → readable card (table),
+                              // far clearer than the raw JSON payload
+                              <SpecialistResultView result={subAgent.output} />
+                            ) : (
+                              // non-structured payload → collapsible pretty JSON/text
+                              <PrettyPayload value={subAgent.rawOutput} />
+                            )}
                           </>
                         )}
                       </div>
