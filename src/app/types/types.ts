@@ -22,18 +22,20 @@ export interface ComponentOption {
   sku: string;
   name: string;
   specs: Record<string, unknown>;
-  note: string;
-  compatible: boolean;
+  /** Legacy fields (pre-lean schema) — optional for old thread history. */
+  note?: string;
+  compatible?: boolean;
 }
 
 export interface SpecialistResult {
-  component: string;
-  category_detected: string | null;
   query_echo: Record<string, unknown>;
   options: ComponentOption[];
   recommended_sku: string | null;
   total_matched: number;
   pagination_hint: string | null;
+  /** Legacy fields (pre-lean schema) — optional for old thread history. */
+  component?: string;
+  category_detected?: string | null;
 }
 
 export interface FileItem {

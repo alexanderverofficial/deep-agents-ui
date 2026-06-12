@@ -44,6 +44,7 @@ export const ToolCallBox = React.memo<ToolCallBoxProps>(
     const [expandedArgs, setExpandedArgs] = useState<Record<string, boolean>>(
       {}
     );
+    const [resultExpanded, setResultExpanded] = useState<boolean | null>(null);
 
     const { name, args, result, status } = useMemo(() => {
       return {
@@ -53,6 +54,26 @@ export const ToolCallBox = React.memo<ToolCallBoxProps>(
         status: toolCall.status || "completed",
       };
     }, [toolCall]);
+
+    // Tool results often arrive as a SINGLE-LINE JSON string (e.g. SpecialistResult
+    // from task()) — pretty-print it so it reads well, and make it collapsible.
+    const prettyResult = useMemo(() => {
+      if (result == null) return "";
+      if (typeof result === "string") {
+        const t = result.trim();
+        if (t.startsWith("{") || t.startsWith("[")) {
+          try {
+            return JSON.stringify(JSON.parse(t), null, 2);
+          } catch {
+            /* not JSON — fall through */
+          }
+        }
+        return result;
+      }
+      return JSON.stringify(result, null, 2);
+    }, [result]);
+    // long payloads start collapsed; short ones start open (until user toggles)
+    const isResultOpen = resultExpanded ?? prettyResult.length <= 400;
 
     const statusIcon = useMemo(() => {
       switch (status) {
@@ -208,14 +229,28 @@ export const ToolCallBox = React.memo<ToolCallBoxProps>(
                 )}
                 {result && (
                   <div className="mt-4">
-                    <h4 className="mb-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                      Result
-                    </h4>
-                    <pre className="m-0 overflow-x-auto whitespace-pre-wrap break-all rounded-sm border border-border bg-muted/40 p-2 font-mono text-xs leading-7 text-foreground">
-                      {typeof result === "string"
-                        ? result
-                        : JSON.stringify(result, null, 2)}
-                    </pre>
+                    <button
+                      type="button"
+                      onClick={() => setResultExpanded(!isResultOpen)}
+                      className="flex w-full items-center justify-between rounded-sm bg-muted/30 p-2 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground transition-colors hover:bg-muted/50"
+                    >
+                      <span>
+                        Result
+                        <span className="ml-2 font-normal normal-case tracking-normal text-tertiary">
+                          ({prettyResult.length} znaków)
+                        </span>
+                      </span>
+                      {isResultOpen ? (
+                        <ChevronUp size={12} className="text-muted-foreground" />
+                      ) : (
+                        <ChevronDown size={12} className="text-muted-foreground" />
+                      )}
+                    </button>
+                    {isResultOpen && (
+                      <pre className="m-0 max-h-96 overflow-auto whitespace-pre-wrap break-words rounded-sm border border-border bg-muted/40 p-2 font-mono text-xs leading-5 text-foreground">
+                        {prettyResult}
+                      </pre>
+                    )}
                   </div>
                 )}
               </>

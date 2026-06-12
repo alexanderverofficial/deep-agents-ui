@@ -3,10 +3,10 @@ import type { SpecialistResult, ComponentOption } from "@/app/types/types";
 function isComponentOption(v: unknown): v is ComponentOption {
   if (!v || typeof v !== "object") return false;
   const o = v as Record<string, unknown>;
+  // lean schema: {sku, name, specs}; legacy note/compatible tolerated but not required
   return (
     typeof o.sku === "string" &&
     typeof o.name === "string" &&
-    typeof o.compatible === "boolean" &&
     typeof o.specs === "object" &&
     o.specs !== null
   );
@@ -15,11 +15,12 @@ function isComponentOption(v: unknown): v is ComponentOption {
 function isSpecialistResult(v: unknown): v is SpecialistResult {
   if (!v || typeof v !== "object") return false;
   const o = v as Record<string, unknown>;
+  // lean schema has no `component` echo — identify by shape (options + total_matched)
   return (
-    typeof o.component === "string" &&
     Array.isArray(o.options) &&
     o.options.every(isComponentOption) &&
-    typeof o.total_matched === "number"
+    typeof o.total_matched === "number" &&
+    "recommended_sku" in o
   );
 }
 

@@ -52,9 +52,8 @@ const OptionsTable = React.memo<{ result: SpecialistResult }>(({ result }) => (
   <table className="w-full table-fixed border-collapse text-xs">
     <thead>
       <tr className="text-left text-tertiary">
-        <th className="w-[34%] py-1 pr-2 font-medium">SKU</th>
-        <th className="w-[44%] py-1 pr-2 font-medium">Nazwa / specyfikacja</th>
-        <th className="w-[22%] py-1 font-medium">Zgodny</th>
+        <th className="w-[38%] py-1 pr-2 font-medium">SKU</th>
+        <th className="w-[62%] py-1 font-medium">Nazwa / specyfikacja</th>
       </tr>
     </thead>
     <tbody>
@@ -76,16 +75,9 @@ const OptionsTable = React.memo<{ result: SpecialistResult }>(({ result }) => (
                 </span>
               )}
             </td>
-            <td className="break-words py-1 pr-2">
+            <td className="break-words py-1">
               <div className="font-medium text-primary">{opt.name}</div>
               <div className="text-tertiary">{summarizeSpecs(opt.specs)}</div>
-            </td>
-            <td className="py-1">
-              {opt.compatible ? (
-                <span className="text-success">tak</span>
-              ) : (
-                <span className="text-destructive">nie</span>
-              )}
             </td>
           </tr>
         );
@@ -113,9 +105,13 @@ const SubAgentCard = React.memo<{ subAgent: SubAgent }>(({ subAgent }) => {
       {result ? (
         <>
           <div className="text-xs text-tertiary">
-            <span className="font-medium text-primary">{result.component}</span>
-            {result.category_detected ? ` · ${result.category_detected}` : ""}
-            {` · ${result.total_matched} dopasowań`}
+            <span className="font-medium text-primary">{result.total_matched} dopasowań</span>
+            {result.recommended_sku ? (
+              <>
+                {" · rekomendacja: "}
+                <span className="font-mono text-primary">{result.recommended_sku}</span>
+              </>
+            ) : null}
           </div>
           {result.options.length > 0 ? (
             <OptionsTable result={result} />
