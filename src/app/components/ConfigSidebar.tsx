@@ -1,22 +1,67 @@
 "use client";
 
+import { useState } from "react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
 import { useChatContext } from "@/providers/ChatProvider";
 import { getConfig, getDefaultConfig } from "@/lib/config";
 import type { ConfigEntry } from "@/app/types/types";
-import { FileText, ImageOff } from "lucide-react";
+import {
+  FileText,
+  Cpu,
+  MemoryStick,
+  HardDrive,
+  CircuitBoard,
+  Fan,
+  PcCase,
+  Gpu,
+  Plug,
+  MonitorCog,
+  Computer,
+  Package,
+  type LucideIcon,
+} from "lucide-react";
 
 function configuratorBase(): string {
   return getConfig()?.configuratorUrl || getDefaultConfig().configuratorUrl || "";
 }
 
-function EntryImage({ entry, large }: { entry: ConfigEntry; large?: boolean }) {
+/** Component-type icon used when a product has no photo (or it fails to load). */
+const KIND_ICON: Record<string, LucideIcon> = {
+  base_unit: Computer,
+  motherboard: CircuitBoard,
+  cpu: Cpu,
+  ram: MemoryStick,
+  storage: HardDrive,
+  cooler: Fan,
+  chassis: PcCase,
+  gpu: Gpu,
+  psu: Plug,
+  os: MonitorCog,
+};
+
+function EntryImage({
+  entry,
+  kind,
+  large,
+}: {
+  entry: ConfigEntry;
+  kind?: string;
+  large?: boolean;
+}) {
+  const [failed, setFailed] = useState(false);
   const size = large ? "h-28 w-28" : "h-12 w-12";
-  if (!entry.image_url) {
+  if (!entry.image_url || failed) {
+    const Icon = (kind && KIND_ICON[kind]) || Package;
     return (
-      <div className={`${size} flex shrink-0 items-center justify-center rounded-md border border-border bg-muted text-muted-foreground`}>
-        <ImageOff className="h-5 w-5" />
+      <div
+        className={`${size} flex shrink-0 items-center justify-center rounded-md border border-border bg-accent/60`}
+        title={entry.name}
+      >
+        <Icon
+          className={`${large ? "h-12 w-12" : "h-6 w-6"} text-brand-primary opacity-80`}
+          strokeWidth={1.5}
+        />
       </div>
     );
   }
@@ -25,15 +70,7 @@ function EntryImage({ entry, large }: { entry: ConfigEntry; large?: boolean }) {
       src={`${configuratorBase()}${entry.image_url}`}
       alt={entry.name}
       className={`${size} shrink-0 rounded-md border border-border bg-white object-contain`}
-      onError={(e) => {
-        const el = e.currentTarget;
-        el.onerror = null;
-        el.src =
-          "data:image/svg+xml;utf8," +
-          encodeURIComponent(
-            "<svg xmlns='http://www.w3.org/2000/svg' width='80' height='80'><rect width='100%' height='100%' fill='%23eee'/><text x='50%' y='50%' font-size='10' text-anchor='middle' fill='%23999' dy='.3em'>brak</text></svg>"
-          );
-      }}
+      onError={() => setFailed(true)}
     />
   );
 }
@@ -61,7 +98,7 @@ function BaseCard({ entry, onEdit }: { entry: ConfigEntry; onEdit: () => void })
   return (
     <div className="rounded-lg border border-border p-3">
       <div className="flex gap-3">
-        <EntryImage entry={entry} large />
+        <EntryImage entry={entry} kind="base_unit" large />
         <div className="min-w-0 flex-1">
           <div className="text-sm font-semibold">{entry.name}</div>
           <div className="font-mono text-xs text-muted-foreground">{entry.sku}</div>
@@ -81,8 +118,8 @@ function BaseCard({ entry, onEdit }: { entry: ConfigEntry; onEdit: () => void })
   );
 }
 
-function MiniCard({ label, entry, onEdit }:
-  { label: string; entry: ConfigEntry; onEdit: () => void }) {
+function MiniCard({ label, entry, kind, onEdit }:
+  { label: string; entry: ConfigEntry; kind?: string; onEdit: () => void }) {
   return (
     <div className="rounded-md border border-border px-3 py-2">
       <div className="flex items-center justify-between">
@@ -97,7 +134,7 @@ function MiniCard({ label, entry, onEdit }:
         <Button variant="ghost" size="sm" className="h-5 px-1.5 py-0 text-[10px]" onClick={onEdit}>edytuj</Button>
       </div>
       <div className="mt-1 flex items-center gap-2">
-        <EntryImage entry={entry} />
+        <EntryImage entry={entry} kind={kind} />
         <div className="min-w-0">
           <div className="truncate font-mono text-xs">{entry.sku}</div>
           <SpecLines entry={entry} />
@@ -154,15 +191,15 @@ export function ConfigSidebar() {
       {SINGLE_SLOTS.map(([key, label, editMsg]) =>
         c[key] ? (
           <MiniCard key={`${keyPrefix}${key}`} label={label} entry={c[key]}
-            onEdit={() => ask(editMsg)} />
+            kind={key} onEdit={() => ask(editMsg)} />
         ) : null
       )}
       {(c.ram_entries ?? []).map((e: ConfigEntry, i: number) => (
-        <MiniCard key={`${keyPrefix}ram-${i}`} label="RAM" entry={e}
+        <MiniCard key={`${keyPrefix}ram-${i}`} label="RAM" entry={e} kind="ram"
           onEdit={() => ask("Chcę zmienić konfigurację RAM. Pokaż kompatybilne opcje.")} />
       ))}
       {(c.storage_entries ?? []).map((e: ConfigEntry, i: number) => (
-        <MiniCard key={`${keyPrefix}st-${i}`} label="Dysk" entry={e}
+        <MiniCard key={`${keyPrefix}st-${i}`} label="Dysk" entry={e} kind="storage"
           onEdit={() => ask("Chcę zmienić dysk/storage. Pokaż kompatybilne opcje.")} />
       ))}
     </>
