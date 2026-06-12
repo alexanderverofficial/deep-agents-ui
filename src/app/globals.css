@@ -362,26 +362,35 @@ button {
   }
 }
 
-/* Custom scrollbar styles */
-.scrollbar-pretty {
-  overflow-y: scroll;
+/* Themed scrollbars — applied globally so native overflow containers
+   (chat, cart, code blocks) match the Radix ScrollArea (thumb: bg-border). */
+* {
+  scrollbar-width: thin; /* Firefox + Chrome 121+ */
+  scrollbar-color: var(--color-border) transparent;
 }
 
-.scrollbar-pretty::-webkit-scrollbar {
-  width: 6px;
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
 }
 
-.scrollbar-pretty::-webkit-scrollbar-track {
+::-webkit-scrollbar-track {
   background: transparent;
 }
 
-.scrollbar-pretty::-webkit-scrollbar-thumb {
+::-webkit-scrollbar-thumb {
   background-color: var(--color-border);
   border-radius: 9999px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
 }
 
-.scrollbar-pretty::-webkit-scrollbar-thumb:hover {
+::-webkit-scrollbar-thumb:hover {
   background-color: var(--color-text-tertiary);
+}
+
+::-webkit-scrollbar-corner {
+  background: transparent;
 }
 
 /* Global diff highlighting styles */
