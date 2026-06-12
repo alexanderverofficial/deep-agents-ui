@@ -88,10 +88,6 @@ export default {
         xs: "0 1px 2px 0 rgba(0, 0, 0, 0.05)",
       },
       backgroundColor: {
-        primary: "var(--bg-primary)",
-        "primary-hover": "var(--bg-primary_hover)",
-        secondary: "var(--bg-secondary)",
-        "secondary-hover": "var(--bg-secondary_hover)",
         tertiary: "var(--bg-tertiary)",
         quaternary: "var(--bg-quaternary)",
 
@@ -153,12 +149,17 @@ export default {
       },
       colors: {
         border: "hsl(var(--border))",
+        "border-light": "var(--color-border-light)",
         input: "hsl(var(--input))",
         ring: "hsl(var(--ring))",
         background: "hsl(var(--background))",
         foreground: "hsl(var(--foreground))",
+        surface: "var(--color-surface)",
+        success: "hsl(var(--success) / <alpha-value>)",
+        warning: "hsl(var(--warning) / <alpha-value>)",
+        info: "hsl(var(--info) / <alpha-value>)",
         primary: {
-          DEFAULT: "hsl(var(--primary))",
+          DEFAULT: "hsl(var(--primary) / <alpha-value>)",
           foreground: "hsl(var(--primary-foreground))",
         },
         secondary: {

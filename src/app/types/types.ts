@@ -15,7 +15,8 @@ export interface SubAgent {
   rawOutput?: string;
   /** Parsed SpecialistResult if the task output was a SpecialistResult JSON; else null. */
   output: SpecialistResult | null;
-  status: "pending" | "active" | "completed" | "error";
+  /** warning = finished fine but with 0 matches; error = crashed OR returned nothing. */
+  status: "pending" | "active" | "completed" | "warning" | "error";
 }
 
 export interface ComponentOption {

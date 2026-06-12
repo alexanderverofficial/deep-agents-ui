@@ -68,8 +68,8 @@ function BaseCard({ entry, onEdit }: { entry: ConfigEntry; onEdit: () => void })
           <SpecLines entry={entry} />
           {entry.datasheet_url && (
             <a href={`${configuratorBase()}${entry.datasheet_url}`} target="_blank" rel="noreferrer"
-               className="mt-1 inline-flex items-center gap-1 text-xs text-primary hover:underline">
-              <FileText className="h-3 w-3" /> Datasheet
+               className="mt-1 inline-flex items-center gap-1 text-xs text-brand-primary hover:underline">
+              <FileText className="h-3 w-3" /> Karta katalogowa
             </a>
           )}
         </div>
@@ -86,10 +86,10 @@ function MiniCard({ label, entry, onEdit }:
   return (
     <div className="rounded-md border border-border px-3 py-2">
       <div className="flex items-center justify-between">
-        <span className="flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wider text-zinc-500">
+        <span className="flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wider text-tertiary">
           {label}
           {Number(entry.quantity) > 1 && (
-            <span className="rounded bg-zinc-200 px-1 font-mono text-[10px] text-zinc-700">
+            <span className="rounded bg-info/15 px-1 font-mono text-[10px] font-bold text-brand-primary">
               ×{Number(entry.quantity)}
             </span>
           )}
@@ -162,7 +162,7 @@ export function ConfigSidebar() {
           onEdit={() => ask("Chcę zmienić konfigurację RAM. Pokaż kompatybilne opcje.")} />
       ))}
       {(c.storage_entries ?? []).map((e: ConfigEntry, i: number) => (
-        <MiniCard key={`${keyPrefix}st-${i}`} label="Storage" entry={e}
+        <MiniCard key={`${keyPrefix}st-${i}`} label="Dysk" entry={e}
           onEdit={() => ask("Chcę zmienić dysk/storage. Pokaż kompatybilne opcje.")} />
       ))}
     </>
@@ -179,11 +179,11 @@ export function ConfigSidebar() {
           // multiple proposed configurations — one collapsible section per option
           variants.map((variant, i) => (
             <details key={`variant-${i}`} open={i === 0}
-              className="rounded-lg border border-border">
-              <summary className="cursor-pointer select-none px-3 py-2 text-xs font-semibold">
+              className="overflow-hidden rounded-lg border border-border bg-card">
+              <summary className="cursor-pointer select-none border-l-2 border-l-brand bg-muted/50 px-3 py-2 text-xs font-semibold transition-colors hover:bg-muted">
                 {variant.label || `Opcja ${i + 1}`}
               </summary>
-              <div className="space-y-2 p-2 pt-0">{renderEntries(variant, `v${i}-`)}</div>
+              <div className="space-y-2 p-2">{renderEntries(variant, `v${i}-`)}</div>
             </details>
           ))
         ) : (

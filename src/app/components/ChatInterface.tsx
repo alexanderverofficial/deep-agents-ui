@@ -46,21 +46,21 @@ const getStatusIcon = (status: TodoItem["status"], className?: string) => {
       return (
         <CheckCircle
           size={16}
-          className={cn("text-success/80", className)}
+          className={cn("text-success", className)}
         />
       );
     case "in_progress":
       return (
         <Clock
           size={16}
-          className={cn("text-warning/80", className)}
+          className={cn("text-warning", className)}
         />
       );
     default:
       return (
         <Circle
           size={16}
-          className={cn("text-tertiary/70", className)}
+          className={cn("text-tertiary", className)}
         />
       );
   }
@@ -308,9 +308,9 @@ export const ChatInterface = React.memo<ChatInterfaceProps>(({ assistant }) => {
               <h3 className="mb-1 text-[10px] font-semibold uppercase tracking-wider text-tertiary">
                 {
                   {
-                    pending: "Pending",
-                    in_progress: "In Progress",
-                    completed: "Completed",
+                    pending: "Oczekujące",
+                    in_progress: "W trakcie",
+                    completed: "Ukończone",
                   }[status]
                 }
               </h3>
@@ -370,7 +370,7 @@ export const ChatInterface = React.memo<ChatInterfaceProps>(({ assistant }) => {
         >
           {isThreadLoading ? (
             <div className="flex items-center justify-center p-8">
-              <p className="text-muted-foreground">Loading...</p>
+              <p className="text-muted-foreground">Ładowanie…</p>
             </div>
           ) : (
             <>
@@ -419,7 +419,7 @@ export const ChatInterface = React.memo<ChatInterfaceProps>(({ assistant }) => {
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={handleKeyDown}
-              placeholder={isLoading ? "Running..." : "Write your message..."}
+              placeholder={isLoading ? "Agent pracuje…" : "Napisz wiadomość…"}
               className="font-inherit field-sizing-content flex-1 resize-none border-0 bg-transparent px-[18px] pb-[13px] pt-[14px] text-sm leading-7 text-primary outline-none placeholder:text-tertiary"
               rows={1}
             />
@@ -439,7 +439,7 @@ export const ChatInterface = React.memo<ChatInterfaceProps>(({ assistant }) => {
                   ) : (
                     <>
                       <ArrowUp size={18} />
-                      <span>Send</span>
+                      <span>Wyślij</span>
                     </>
                   )}
                 </Button>
@@ -455,28 +455,30 @@ export const ChatInterface = React.memo<ChatInterfaceProps>(({ assistant }) => {
         minSize={22}
         className="flex min-h-0 flex-col border-l border-border"
       >
-        <div className="flex items-stretch border-b border-border text-sm">
-          <button
-            type="button"
-            className={cn("px-3 py-2", rightTab === "config" && "font-semibold")}
-            onClick={() => setRightTab("config")}
-          >
-            Koszyk
-          </button>
-          <button
-            type="button"
-            className={cn("px-3 py-2", rightTab === "tasks" && "font-semibold")}
-            onClick={() => setRightTab("tasks")}
-          >
-            Tasks{hasTasks ? ` (${todos.length})` : ""}
-          </button>
-          <button
-            type="button"
-            className={cn("px-3 py-2", rightTab === "files" && "font-semibold")}
-            onClick={() => setRightTab("files")}
-          >
-            Files{hasFiles ? ` (${Object.keys(files).length})` : ""}
-          </button>
+        <div className="flex items-stretch border-b border-border bg-card text-sm">
+          {(
+            [
+              ["config", `Koszyk`],
+              ["tasks", `Zadania${hasTasks ? ` (${todos.length})` : ""}`],
+              [
+                "files",
+                `Pliki${hasFiles ? ` (${Object.keys(files).length})` : ""}`,
+              ],
+            ] as const
+          ).map(([tab, label]) => (
+            <button
+              key={tab}
+              type="button"
+              className={cn(
+                "relative px-3 py-2 text-muted-foreground transition-colors hover:text-foreground",
+                rightTab === tab &&
+                  "font-semibold text-brand-primary after:absolute after:inset-x-2 after:bottom-0 after:h-0.5 after:rounded-full after:bg-primary"
+              )}
+              onClick={() => setRightTab(tab)}
+            >
+              {label}
+            </button>
+          ))}
         </div>
         <div className="min-h-0 flex-1 overflow-y-auto">
           {rightTab === "config" && <ConfigSidebar />}

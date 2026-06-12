@@ -9,6 +9,7 @@ import type {
   ToolCall,
   ActionRequest,
   ReviewConfig,
+  SpecialistResult,
 } from "@/app/types/types";
 import { Message } from "@langchain/langgraph-sdk";
 import {
@@ -38,11 +39,29 @@ interface ChatMessageProps {
 const ERROR_MARKERS =
   /GraphRecursionError|Recursion limit|Traceback \(most recent call last\)|UserInterrupt|"error"\s*:/i;
 
-function subAgentStatus(toolCall: ToolCall): SubAgent["status"] {
+function subAgentStatus(
+  toolCall: ToolCall,
+  parsed: SpecialistResult | null
+): SubAgent["status"] {
   if (toolCall.status !== "completed") return "active";
   const result = typeof toolCall.result === "string" ? toolCall.result : "";
-  return ERROR_MARKERS.test(result) ? "error" : "completed";
+  if (!result.trim()) return "error"; // specialist returned nothing at all
+  if (ERROR_MARKERS.test(result)) return "error";
+  // finished cleanly but found nothing → warning, not success
+  if (parsed && (parsed.total_matched === 0 || parsed.options.length === 0)) {
+    return "warning";
+  }
+  return "completed";
 }
+
+/** Left accent border of the inline specialist card, colored by status. */
+const STATUS_BORDER: Record<SubAgent["status"], string> = {
+  pending: "border-l-border",
+  active: "border-l-info",
+  completed: "border-l-success",
+  warning: "border-l-warning",
+  error: "border-l-error",
+};
 
 export const ChatMessage = React.memo<ChatMessageProps>(
   ({
@@ -74,16 +93,17 @@ export const ChatMessage = React.memo<ChatMessageProps>(
           const subagentType = (toolCall.args as Record<string, unknown>)[
             "subagent_type"
           ] as string;
+          const parsed = toolCall.result
+            ? parseSpecialistResult(toolCall.result)
+            : null;
           return {
             id: toolCall.id,
             name: toolCall.name,
             subAgentName: subagentType,
             input: toolCall.args,
             rawOutput: toolCall.result,
-            output: toolCall.result
-              ? parseSpecialistResult(toolCall.result)
-              : null,
-            status: subAgentStatus(toolCall),
+            output: parsed,
+            status: subAgentStatus(toolCall, parsed),
           } as SubAgent;
         });
     }, [toolCalls]);
@@ -183,9 +203,14 @@ export const ChatMessage = React.memo<ChatMessageProps>(
                   </div>
                   {isSubAgentExpanded(subAgent.id) && (
                     <div className="w-full max-w-full">
-                      <div className="bg-surface border-border-light rounded-md border p-4">
-                        <h4 className="text-primary/70 mb-2 text-xs font-semibold uppercase tracking-wider">
-                          Input
+                      <div
+                        className={cn(
+                          "rounded-md border border-border-light border-l-2 bg-surface p-4",
+                          STATUS_BORDER[subAgent.status]
+                        )}
+                      >
+                        <h4 className="mb-2 text-xs font-semibold uppercase tracking-wider text-secondary">
+                          Zapytanie
                         </h4>
                         <div className="mb-4">
                           <MarkdownContent
@@ -194,7 +219,7 @@ export const ChatMessage = React.memo<ChatMessageProps>(
                         </div>
                         {(subAgent.output || subAgent.rawOutput) && (
                           <>
-                            <h4 className="text-primary/70 mb-2 text-xs font-semibold uppercase tracking-wider">
+                            <h4 className="mb-2 text-xs font-semibold uppercase tracking-wider text-secondary">
                               Wynik
                             </h4>
                             {subAgent.output ? (

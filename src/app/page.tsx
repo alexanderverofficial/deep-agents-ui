@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Assistant } from "@langchain/langgraph-sdk";
 import { ClientProvider, useClient } from "@/providers/ClientProvider";
 import { Settings, MessagesSquare, SquarePen } from "lucide-react";
+import { ThemeToggle } from "@/app/components/ThemeToggle";
 import {
   ResizableHandle,
   ResizablePanel,
@@ -111,9 +112,19 @@ function HomePageInner({
         initialConfig={config}
       />
       <div className="flex h-screen flex-col">
-        <header className="flex h-16 items-center justify-between border-b border-border px-6">
+        <header className="flex h-16 items-center justify-between border-b border-border bg-card px-6">
           <div className="flex items-center gap-4">
-            <h1 className="text-xl font-semibold">Deep Agent UI</h1>
+            <div className="flex items-center gap-3">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src="/elmatic-logo.png"
+                alt="elmatic"
+                className="h-7 w-auto dark:brightness-125"
+              />
+              <span className="hidden border-l border-border pl-3 text-sm font-medium tracking-wide text-muted-foreground sm:inline">
+                Konfigurator
+              </span>
+            </div>
             {!sidebar && (
               <Button
                 variant="ghost"
@@ -122,7 +133,7 @@ function HomePageInner({
                 className="rounded-md border border-border bg-card p-3 text-foreground hover:bg-accent"
               >
                 <MessagesSquare className="mr-2 h-4 w-4" />
-                Threads
+                Wątki
                 {interruptCount > 0 && (
                   <span className="ml-2 inline-flex min-h-4 min-w-4 items-center justify-center rounded-full bg-destructive px-1 text-[10px] text-destructive-foreground">
                     {interruptCount}
@@ -132,27 +143,29 @@ function HomePageInner({
             )}
           </div>
           <div className="flex items-center gap-2">
-            <div className="text-sm text-muted-foreground">
-              <span className="font-medium">Assistant:</span>{" "}
+            <div
+              className="hidden items-center gap-1.5 rounded-full border border-border bg-muted/60 px-3 py-1 text-xs text-muted-foreground md:flex"
+              title="Aktywny agent"
+            >
+              <span className="inline-block h-2 w-2 rounded-full bg-success" />
               {config.assistantId}
             </div>
+            <ThemeToggle />
             <Button
               variant="outline"
               size="sm"
               onClick={() => setConfigDialogOpen(true)}
             >
               <Settings className="mr-2 h-4 w-4" />
-              Settings
+              Ustawienia
             </Button>
             <Button
-              variant="outline"
               size="sm"
               onClick={() => setThreadId(null)}
               disabled={!threadId}
-              className="border-[#2F6868] bg-[#2F6868] text-white hover:bg-[#2F6868]/80"
             >
               <SquarePen className="mr-2 h-4 w-4" />
-              New Thread
+              Nowa rozmowa
             </Button>
           </div>
         </header>
@@ -252,15 +265,21 @@ function HomePageContent() {
         />
         <div className="flex h-screen items-center justify-center">
           <div className="text-center">
-            <h1 className="text-2xl font-bold">Welcome to Standalone Chat</h1>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="/elmatic-logo.png"
+              alt="elmatic"
+              className="mx-auto mb-4 h-10 w-auto dark:brightness-125"
+            />
+            <h1 className="text-2xl font-bold">Konfigurator elmatic</h1>
             <p className="mt-2 text-muted-foreground">
-              Configure your deployment to get started
+              Skonfiguruj połączenie, aby rozpocząć
             </p>
             <Button
               onClick={() => setConfigDialogOpen(true)}
               className="mt-4"
             >
-              Open Configuration
+              Otwórz konfigurację
             </Button>
           </div>
         </div>
@@ -288,7 +307,7 @@ export default function HomePage() {
     <Suspense
       fallback={
         <div className="flex h-screen items-center justify-center">
-          <p className="text-muted-foreground">Loading...</p>
+          <p className="text-muted-foreground">Ładowanie…</p>
         </div>
       }
     >

@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useMemo, useState } from "react";
-import { ChevronDown, ChevronUp } from "lucide-react";
+import { ChevronDown, ChevronUp, AlertTriangle } from "lucide-react";
 import type { SpecialistResult, ComponentOption } from "@/app/types/types";
 import { cn } from "@/lib/utils";
 
@@ -24,7 +24,12 @@ export const SpecialistResultView = React.memo<{ result: SpecialistResult }>(
   ({ result }) => (
     <div className="flex flex-col gap-2">
       <div className="text-xs text-tertiary">
-        <span className="font-medium text-primary">
+        <span
+          className={cn(
+            "font-medium",
+            result.total_matched === 0 ? "text-warning" : "text-primary"
+          )}
+        >
           {result.total_matched} dopasowań
         </span>
         {result.recommended_sku ? (
@@ -71,7 +76,13 @@ export const SpecialistResultView = React.memo<{ result: SpecialistResult }>(
           </tbody>
         </table>
       ) : (
-        <p className="text-xs text-tertiary">Brak opcji.</p>
+        <div className="flex items-start gap-2 rounded-md border border-warning bg-warning/10 p-2 text-xs text-warning">
+          <AlertTriangle size={14} className="mt-0.5 shrink-0" />
+          <span>
+            Brak dopasowań dla podanych kryteriów — spróbuj poluzować
+            parametry wyszukiwania.
+          </span>
+        </div>
       )}
       {result.pagination_hint && (
         <p className="text-[10px] text-tertiary">{result.pagination_hint}</p>

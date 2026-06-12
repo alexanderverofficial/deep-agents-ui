@@ -51,7 +51,7 @@ export function ConfigDialog({
 
   const handleSave = () => {
     if (!deploymentUrl || !assistantId) {
-      alert("Please fill in all required fields");
+      alert("Uzupełnij wszystkie wymagane pola");
       return;
     }
 
@@ -71,15 +71,15 @@ export function ConfigDialog({
     >
       <DialogContent className="sm:max-w-[525px]">
         <DialogHeader>
-          <DialogTitle>Configuration</DialogTitle>
+          <DialogTitle>Ustawienia</DialogTitle>
           <DialogDescription>
-            Configure your LangGraph deployment settings. These settings are
-            saved in your browser&apos;s local storage.
+            Skonfiguruj połączenie z wdrożeniem LangGraph. Ustawienia są
+            zapisywane lokalnie w przeglądarce.
           </DialogDescription>
         </DialogHeader>
         <div className="grid gap-4 py-4">
           <div className="grid gap-2">
-            <Label htmlFor="deploymentUrl">Deployment URL</Label>
+            <Label htmlFor="deploymentUrl">Adres wdrożenia (LangGraph)</Label>
             <Input
               id="deploymentUrl"
               placeholder="https://<deployment-url>"
@@ -88,7 +88,7 @@ export function ConfigDialog({
             />
           </div>
           <div className="grid gap-2">
-            <Label htmlFor="assistantId">Assistant ID</Label>
+            <Label htmlFor="assistantId">ID asystenta (graf)</Label>
             <Input
               id="assistantId"
               placeholder="<assistant-id>"
@@ -98,8 +98,8 @@ export function ConfigDialog({
           </div>
           <div className="grid gap-2">
             <Label htmlFor="langsmithApiKey">
-              LangSmith API Key{" "}
-              <span className="text-muted-foreground">(Optional)</span>
+              Klucz API LangSmith{" "}
+              <span className="text-muted-foreground">(opcjonalnie)</span>
             </Label>
             <Input
               id="langsmithApiKey"
@@ -111,8 +111,8 @@ export function ConfigDialog({
           </div>
           <div className="grid gap-2">
             <Label htmlFor="configuratorUrl">
-              Configurator URL{" "}
-              <span className="text-muted-foreground">(Optional)</span>
+              Adres konfiguratora{" "}
+              <span className="text-muted-foreground">(opcjonalnie)</span>
             </Label>
             <Input
               id="configuratorUrl"
@@ -127,9 +127,9 @@ export function ConfigDialog({
             variant="outline"
             onClick={() => onOpenChange(false)}
           >
-            Cancel
+            Anuluj
           </Button>
-          <Button onClick={handleSave}>Save</Button>
+          <Button onClick={handleSave}>Zapisz</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

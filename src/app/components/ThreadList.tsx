@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState, useRef, useCallback } from "react";
 import { format } from "date-fns";
+import { pl } from "date-fns/locale";
 import { Loader2, MessageSquare, X } from "lucide-react";
 import { useQueryState } from "nuqs";
 import { Button } from "@/components/ui/button";
@@ -24,11 +25,11 @@ import { useThreads } from "@/app/hooks/useThreads";
 type StatusFilter = "all" | "idle" | "busy" | "interrupted" | "error";
 
 const GROUP_LABELS = {
-  interrupted: "Requiring Attention",
-  today: "Today",
-  yesterday: "Yesterday",
-  week: "This Week",
-  older: "Older",
+  interrupted: "Wymagają uwagi",
+  today: "Dzisiaj",
+  yesterday: "Wczoraj",
+  week: "W tym tygodniu",
+  older: "Starsze",
 } as const;
 
 const STATUS_COLORS: Record<ThreadItem["status"], string> = {
@@ -47,9 +48,9 @@ function formatTime(date: Date, now = new Date()): string {
   const days = Math.floor(diff / (1000 * 60 * 60 * 24));
 
   if (days === 0) return format(date, "HH:mm");
-  if (days === 1) return "Yesterday";
-  if (days < 7) return format(date, "EEEE");
-  return format(date, "MM/dd");
+  if (days === 1) return "wczoraj";
+  if (days < 7) return format(date, "EEEE", { locale: pl });
+  return format(date, "dd.MM");
 }
 
 function StatusFilterItem({
@@ -82,7 +83,7 @@ function StatusFilterItem({
 function ErrorState({ message }: { message: string }) {
   return (
     <div className="flex flex-col items-center justify-center p-8 text-center">
-      <p className="text-sm text-red-600">Failed to load threads</p>
+      <p className="text-sm text-error">Nie udało się wczytać wątków</p>
       <p className="mt-1 text-xs text-muted-foreground">{message}</p>
     </div>
   );
@@ -104,8 +105,8 @@ function LoadingState() {
 function EmptyState() {
   return (
     <div className="flex flex-col items-center justify-center p-8 text-center">
-      <MessageSquare className="mb-2 h-12 w-12 text-gray-300" />
-      <p className="text-sm text-muted-foreground">No threads found</p>
+      <MessageSquare className="mb-2 h-12 w-12 text-tertiary" />
+      <p className="text-sm text-muted-foreground">Brak wątków</p>
     </div>
   );
 }
@@ -210,7 +211,7 @@ export function ThreadList({
     <div className="absolute inset-0 flex flex-col">
       {/* Header with title, filter, and close button */}
       <div className="grid flex-shrink-0 grid-cols-[1fr_auto] items-center gap-3 border-b border-border p-4">
-        <h2 className="text-lg font-semibold tracking-tight">Threads</h2>
+        <h2 className="text-lg font-semibold tracking-tight">Wątki</h2>
         <div className="flex items-center gap-2">
           <Select
             value={statusFilter}
@@ -220,37 +221,37 @@ export function ThreadList({
               <SelectValue />
             </SelectTrigger>
             <SelectContent align="end">
-              <SelectItem value="all">All statuses</SelectItem>
+              <SelectItem value="all">Wszystkie statusy</SelectItem>
               <SelectSeparator />
               <SelectGroup>
-                <SelectLabel>Active</SelectLabel>
+                <SelectLabel>Aktywne</SelectLabel>
                 <SelectItem value="idle">
                   <StatusFilterItem
                     status="idle"
-                    label="Idle"
+                    label="Bezczynny"
                   />
                 </SelectItem>
                 <SelectItem value="busy">
                   <StatusFilterItem
                     status="busy"
-                    label="Busy"
+                    label="Pracuje"
                   />
                 </SelectItem>
               </SelectGroup>
               <SelectSeparator />
               <SelectGroup>
-                <SelectLabel>Attention</SelectLabel>
+                <SelectLabel>Wymagają uwagi</SelectLabel>
                 <SelectItem value="interrupted">
                   <StatusFilterItem
                     status="interrupted"
-                    label="Interrupted"
+                    label="Przerwany"
                     badge={interruptedCount}
                   />
                 </SelectItem>
                 <SelectItem value="error">
                   <StatusFilterItem
                     status="error"
-                    label="Error"
+                    label="Błąd"
                   />
                 </SelectItem>
               </SelectGroup>
@@ -262,7 +263,7 @@ export function ThreadList({
               size="icon"
               onClick={onClose}
               className="h-8 w-8"
-              aria-label="Close threads sidebar"
+              aria-label="Zamknij panel wątków"
             >
               <X className="h-4 w-4" />
             </Button>
@@ -353,10 +354,10 @@ export function ThreadList({
                   {isLoadingMore ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Loading...
+                      Ładowanie…
                     </>
                   ) : (
-                    "Load More"
+                    "Wczytaj więcej"
                   )}
                 </Button>
               </div>

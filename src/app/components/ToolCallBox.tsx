@@ -48,7 +48,7 @@ export const ToolCallBox = React.memo<ToolCallBoxProps>(
 
     const { name, args, result, status } = useMemo(() => {
       return {
-        name: toolCall.name || "Unknown Tool",
+        name: toolCall.name || "Nieznane narzędzie",
         args: toolCall.args || {},
         result: toolCall.result,
         status: toolCall.status || "completed",
@@ -78,7 +78,12 @@ export const ToolCallBox = React.memo<ToolCallBoxProps>(
     const statusIcon = useMemo(() => {
       switch (status) {
         case "completed":
-          return <CircleCheckBigIcon />;
+          return (
+            <CircleCheckBigIcon
+              size={14}
+              className="text-success"
+            />
+          );
         case "error":
           return (
             <AlertCircle
@@ -170,7 +175,7 @@ export const ToolCallBox = React.memo<ToolCallBoxProps>(
                   stream={stream}
                   message={uiComponent}
                   namespace={graphId}
-                  meta={{ status, args, result: result ?? "No Result Yet" }}
+                  meta={{ status, args, result: result ?? "Brak wyniku" }}
                 />
               </div>
             ) : actionRequest && onResume ? (
@@ -188,7 +193,7 @@ export const ToolCallBox = React.memo<ToolCallBoxProps>(
                 {Object.keys(args).length > 0 && (
                   <div className="mt-4">
                     <h4 className="mb-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                      Arguments
+                      Argumenty
                     </h4>
                     <div className="space-y-2">
                       {Object.entries(args).map(([key, value]) => (
@@ -235,7 +240,7 @@ export const ToolCallBox = React.memo<ToolCallBoxProps>(
                       className="flex w-full items-center justify-between rounded-sm bg-muted/30 p-2 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground transition-colors hover:bg-muted/50"
                     >
                       <span>
-                        Result
+                        Wynik
                         <span className="ml-2 font-normal normal-case tracking-normal text-tertiary">
                           ({prettyResult.length} znaków)
                         </span>
