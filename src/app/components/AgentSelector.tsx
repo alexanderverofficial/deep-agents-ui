@@ -64,18 +64,28 @@ export function AgentSelector({
 
   return (
     <Select value={value} onValueChange={onChange}>
-      {/* Controlled trigger: render the icon + short label ourselves (single
-          line) instead of <SelectValue>, which would mirror the item's full
-          two-line content into the h-9 trigger and clip it. */}
+      {/* Controlled trigger: render icon + label + subtitle ourselves to match
+          the dropdown rows (a one-line label in a tall box looked empty). The
+          direct child is a <div> on purpose — the base trigger's
+          `[&>span]:line-clamp-1` would otherwise flatten this two-line block. */}
       <SelectTrigger
-        className="h-9 w-[210px] bg-card"
+        className="h-auto min-h-[2.75rem] w-[230px] bg-card py-1.5"
         aria-label="Wybierz agenta"
         title="Wybierz agenta — każda karta przeglądarki może mieć własnego"
       >
-        <span className="flex min-w-0 items-center gap-2">
-          <ActiveIcon className="h-4 w-4 shrink-0 text-brand-primary" />
-          <span className="truncate">{active?.label ?? value}</span>
-        </span>
+        <div className="flex min-w-0 items-center gap-2.5 text-left">
+          <ActiveIcon className="h-5 w-5 shrink-0 text-brand-primary" />
+          <div className="flex min-w-0 flex-col">
+            <span className="truncate text-sm font-medium leading-tight">
+              {active?.label ?? value}
+            </span>
+            {active?.hint && (
+              <span className="truncate text-[11px] leading-tight text-muted-foreground">
+                {active.hint}
+              </span>
+            )}
+          </div>
+        </div>
       </SelectTrigger>
       <SelectContent align="end" className="w-[280px]">
         {options.map((a) => {
