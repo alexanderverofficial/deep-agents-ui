@@ -6,7 +6,6 @@ import {
   SelectContent,
   SelectItem,
   SelectTrigger,
-  SelectValue,
 } from "@/components/ui/select";
 
 export interface AgentOption {
@@ -65,27 +64,37 @@ export function AgentSelector({
 
   return (
     <Select value={value} onValueChange={onChange}>
+      {/* Controlled trigger: render the icon + short label ourselves (single
+          line) instead of <SelectValue>, which would mirror the item's full
+          two-line content into the h-9 trigger and clip it. */}
       <SelectTrigger
-        className="h-9 w-[200px] gap-2 bg-card"
+        className="h-9 w-[210px] bg-card"
         aria-label="Wybierz agenta"
         title="Wybierz agenta — każda karta przeglądarki może mieć własnego"
       >
-        <span className="flex items-center gap-2 truncate">
+        <span className="flex min-w-0 items-center gap-2">
           <ActiveIcon className="h-4 w-4 shrink-0 text-brand-primary" />
-          <SelectValue placeholder="Wybierz agenta" />
+          <span className="truncate">{active?.label ?? value}</span>
         </span>
       </SelectTrigger>
-      <SelectContent align="end">
+      <SelectContent align="end" className="w-[280px]">
         {options.map((a) => {
           const Icon = a.icon;
           return (
-            <SelectItem key={a.id} value={a.id}>
-              <span className="flex items-center gap-2">
+            <SelectItem
+              key={a.id}
+              value={a.id}
+              // Drop the reserved left padding + hide the built-in check
+              // indicator (first child span) — each row carries its own icon,
+              // selection is shown by the brand tint below.
+              className="pl-2 pr-3 [&>span:first-child]:hidden data-[state=checked]:text-brand-primary"
+            >
+              <span className="flex items-center gap-2.5 py-0.5">
                 <Icon className="h-4 w-4 shrink-0 text-brand-primary" />
-                <span className="flex flex-col">
+                <span className="flex min-w-0 flex-col">
                   <span className="font-medium leading-tight">{a.label}</span>
                   {a.hint && (
-                    <span className="text-[11px] leading-tight text-muted-foreground">
+                    <span className="text-[11px] leading-snug text-muted-foreground">
                       {a.hint}
                     </span>
                   )}
