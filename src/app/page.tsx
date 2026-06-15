@@ -9,6 +9,7 @@ import { Assistant } from "@langchain/langgraph-sdk";
 import { ClientProvider, useClient } from "@/providers/ClientProvider";
 import { Settings, MessagesSquare, SquarePen } from "lucide-react";
 import { ThemeToggle } from "@/app/components/ThemeToggle";
+import { AgentSelector } from "@/app/components/AgentSelector";
 import {
   ResizableHandle,
   ResizablePanel,
@@ -34,27 +35,45 @@ function HomePageInner({
   const client = useClient();
   const [threadId, setThreadId] = useQueryState("threadId");
   const [sidebar, setSidebar] = useQueryState("sidebar");
+  // The ACTIVE agent for THIS tab lives in the URL (?assistantId=…), so every
+  // browser tab is independent — localStorage only seeds the default. Falls
+  // back to the saved default until the URL param is seeded on mount.
+  const [assistantId, setAssistantId] = useQueryState("assistantId");
+  const activeAssistantId = assistantId || config.assistantId;
 
   const [mutateThreads, setMutateThreads] = useState<(() => void) | null>(null);
   const [interruptCount, setInterruptCount] = useState(0);
   const [assistant, setAssistant] = useState<Assistant | null>(null);
 
+  // Switch agent: update the URL (per-tab) and start a fresh conversation —
+  // agents have different state schemas, so a thread can't be shared.
+  const handleAgentChange = useCallback(
+    (id: string) => {
+      if (id === activeAssistantId) return;
+      setAssistant(null); // avoid a flash of the previous agent's stream
+      setThreadId(null);
+      setAssistantId(id);
+    },
+    [activeAssistantId, setThreadId, setAssistantId]
+  );
+
   const fetchAssistant = useCallback(async () => {
+    if (!activeAssistantId) return;
     const isUUID =
       /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
-        config.assistantId
+        activeAssistantId
       );
 
     if (isUUID) {
       // We should try to fetch the assistant directly with this UUID
       try {
-        const data = await client.assistants.get(config.assistantId);
+        const data = await client.assistants.get(activeAssistantId);
         setAssistant(data);
       } catch (error) {
         console.error("Failed to fetch assistant:", error);
         setAssistant({
-          assistant_id: config.assistantId,
-          graph_id: config.assistantId,
+          assistant_id: activeAssistantId,
+          graph_id: activeAssistantId,
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
           config: {},
@@ -69,7 +88,7 @@ function HomePageInner({
         // We should try to list out the assistants for this graph, and then use the default one.
         // TODO: Paginate this search, but 100 should be enough for graph name
         const assistants = await client.assistants.search({
-          graphId: config.assistantId,
+          graphId: activeAssistantId,
           limit: 100,
         });
         const defaultAssistant = assistants.find(
@@ -85,19 +104,19 @@ function HomePageInner({
           error
         );
         setAssistant({
-          assistant_id: config.assistantId,
-          graph_id: config.assistantId,
+          assistant_id: activeAssistantId,
+          graph_id: activeAssistantId,
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
           config: {},
           metadata: {},
           version: 1,
-          name: config.assistantId,
+          name: activeAssistantId,
           context: {},
         });
       }
     }
-  }, [client, config.assistantId]);
+  }, [client, activeAssistantId]);
 
   useEffect(() => {
     fetchAssistant();
@@ -143,13 +162,10 @@ function HomePageInner({
             )}
           </div>
           <div className="flex items-center gap-2">
-            <div
-              className="hidden items-center gap-1.5 rounded-full border border-border bg-muted/60 px-3 py-1 text-xs text-muted-foreground md:flex"
-              title="Aktywny agent"
-            >
-              <span className="inline-block h-2 w-2 rounded-full bg-success" />
-              {config.assistantId}
-            </div>
+            <AgentSelector
+              value={activeAssistantId}
+              onChange={handleAgentChange}
+            />
             <ThemeToggle />
             <Button
               variant="outline"
@@ -203,6 +219,7 @@ function HomePageInner({
               order={2}
             >
               <ChatProvider
+                key={activeAssistantId}
                 activeAssistant={assistant}
                 onHistoryRevalidate={() => mutateThreads?.()}
               >

@@ -30,9 +30,9 @@ export function ConfigDialog({
   const [deploymentUrl, setDeploymentUrl] = useState(
     initialConfig?.deploymentUrl || ""
   );
-  const [assistantId, setAssistantId] = useState(
-    initialConfig?.assistantId || ""
-  );
+  // The active agent is chosen per-tab via the header selector (URL param), not
+  // here — we only carry the value through so it is preserved on save.
+  const assistantId = initialConfig?.assistantId || "main-configurator";
   const [langsmithApiKey, setLangsmithApiKey] = useState(
     initialConfig?.langsmithApiKey || ""
   );
@@ -43,7 +43,6 @@ export function ConfigDialog({
   useEffect(() => {
     if (open && initialConfig) {
       setDeploymentUrl(initialConfig.deploymentUrl);
-      setAssistantId(initialConfig.assistantId);
       setLangsmithApiKey(initialConfig.langsmithApiKey || "");
       setConfiguratorUrl(initialConfig.configuratorUrl || getDefaultConfig().configuratorUrl || "");
     }
@@ -85,15 +84,6 @@ export function ConfigDialog({
               placeholder="https://<deployment-url>"
               value={deploymentUrl}
               onChange={(e) => setDeploymentUrl(e.target.value)}
-            />
-          </div>
-          <div className="grid gap-2">
-            <Label htmlFor="assistantId">ID asystenta (graf)</Label>
-            <Input
-              id="assistantId"
-              placeholder="<assistant-id>"
-              value={assistantId}
-              onChange={(e) => setAssistantId(e.target.value)}
             />
           </div>
           <div className="grid gap-2">
