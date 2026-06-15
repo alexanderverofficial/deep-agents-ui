@@ -21,25 +21,25 @@ export const KNOWN_AGENTS: AgentOption[] = [
   {
     id: "main-configurator",
     label: "Konfigurator (auto)",
-    hint: "Sam wykrywa kategorię i deleguje",
+    hint: "Auto-dobór kategorii",
     icon: Bot,
   },
   {
     id: "panel-pc-agent",
     label: "Panel PC",
-    hint: "Komputery panelowe z ekranem / HMI",
+    hint: "Z ekranem / HMI",
     icon: MonitorCog,
   },
   {
     id: "box-pc-agent",
     label: "Box PC",
-    hint: "Bezwentylatorowe / embedded, bez ekranu",
+    hint: "Bez ekranu / embedded",
     icon: Box,
   },
   {
     id: "rack-pc-agent",
     label: "Serwer / Rack",
-    hint: "Budowa z komponentów (mobo/CPU/…)",
+    hint: "Budowa z komponentów",
     icon: Server,
   },
 ];
@@ -69,7 +69,7 @@ export function AgentSelector({
           direct child is a <div> on purpose — the base trigger's
           `[&>span]:line-clamp-1` would otherwise flatten this two-line block. */}
       <SelectTrigger
-        className="h-auto min-h-[2.75rem] w-[230px] bg-card py-1.5"
+        className="h-auto min-h-[2.75rem] w-[240px] bg-card py-1.5"
         aria-label="Wybierz agenta"
         title="Wybierz agenta — każda karta przeglądarki może mieć własnego"
       >
