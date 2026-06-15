@@ -47,10 +47,10 @@ function subAgentStatus(
   const result = typeof toolCall.result === "string" ? toolCall.result : "";
   if (!result.trim()) return "error"; // specialist returned nothing at all
   if (ERROR_MARKERS.test(result)) return "error";
-  // finished cleanly but found nothing → warning, not success
-  if (parsed && (parsed.total_matched === 0 || parsed.options.length === 0)) {
-    return "warning";
-  }
+  // finished cleanly but surfaced no options → warning, not success. Key on the
+  // actual options list (not total_matched, which a weak model occasionally
+  // mis-copies from a relaxed retry — options present but total_matched=0).
+  if (parsed && parsed.options.length === 0) return "warning";
   return "completed";
 }
 

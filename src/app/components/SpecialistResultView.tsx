@@ -27,10 +27,10 @@ export const SpecialistResultView = React.memo<{ result: SpecialistResult }>(
         <span
           className={cn(
             "font-medium",
-            result.total_matched === 0 ? "text-warning" : "text-primary"
+            result.options.length === 0 ? "text-warning" : "text-primary"
           )}
         >
-          {result.total_matched} dopasowań
+          {Math.max(result.total_matched, result.options.length)} dopasowań
         </span>
         {result.recommended_sku ? (
           <>
